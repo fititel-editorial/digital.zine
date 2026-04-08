@@ -68,3 +68,4 @@
 - O preview (amostra) é gerado automaticamente no upload (primeiras ~15% das páginas).
 - Os PDFs são armazenados em object storage (S3/local).
 - O token de acesso ao PDF completo é um JWT curto (5 min) gerado no momento da solicitação.
+- Detalhes sobre o fluxo de pagamento e acesso estão no [diagrama de sequência](../06-diagrams/ds-payment.md).

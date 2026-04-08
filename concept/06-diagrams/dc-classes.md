@@ -1,11 +1,10 @@
 # Diagrama de Classes (UML)
 
-O diagrama abaixo mostra as principais entidades do sistema, seus atributos mais relevantes e os relacionamentos.  
-As classes estão simplificadas para foco na modelagem de domínio.
+O diagrama abaixo mostra as principais entidades do sistema, seus atributos mais relevantes e os relacionamentos. As classes estão simplificadas para focar na modelagem de domínio.
 
 ```mermaid
 classDiagram
-    class Leitor {
+    class Utilizador {
         +Long id
         +String p_nome
         +String sb_nome
@@ -78,13 +77,12 @@ classDiagram
         +LocalDateTime deletedAt
     }
 
-    %% Relacionamentos
-    Leitor "1" --> "0..*" Pagamento : faz
+    Utilizador "1" --> "0..*" Pagamento : faz
     Pagamento "*" --> "1" Revista : refere-se a
     Revista "*" --> "1" Edicao : pertence a
     Revista "1" --> "0..*" Pagina : contém
     Pagina "1" --> "0..*" Comentario : recebe
-    Leitor "1" --> "0..*" Comentario : escreve
+    Utilizador "1" --> "0..*" Comentario : escreve
     Comentario "0..1" --> "0..*" Comentario : respostas
     Revista "1" --> "0..*" Autor_Revista : tem
-    Leitor "1" --> "0..*" Revista : (admin) publica
+    Utilizador "1" --> "0..*" Revista : (admin) publica

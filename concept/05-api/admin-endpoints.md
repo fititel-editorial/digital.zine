@@ -2,43 +2,46 @@
 
 **Prefix:** `/api/v1/admin`
 
-## Revistas (já coberto em `revista-endpoints.md` com role ADMIN)
+Todos os endpoints exigem um token JWT de um utilizador com `role = ADMIN`. A autenticação é feita através do cabeçalho `Authorization: Bearer <token>`.
 
-Apenas como lembrete: os endpoints `POST /revistas`, `PUT /revistas/{id}`, `DELETE /revistas/{id}` e `POST /revistas/{id}/upload-pdf` são exclusivos para ADMIN e estão documentados em `revista-endpoints.md`.
+## Revistas
 
----
+Os endpoints de criação, edição, eliminação e substituição de PDF de revistas estão documentados em [`revista-endpoints.md`](./revista-endpoints.md). Apenas utilizadores com papel `ADMIN` podem aceder a:
 
-## Pagamentos (já coberto em `pagamento-endpoints.md`)
+- `POST /revistas`
+- `PUT /revistas/{id}`
+- `DELETE /revistas/{id}`
+- `POST /revistas/{id}/upload-pdf`
+
+## Pagamentos
+
+A gestão de pagamentos está detalhada em [`pagamento-endpoints.md`](./pagamento-endpoints.md). Os seguintes endpoints são exclusivos para administradores:
 
 - `GET /admin/pagamentos?estado=...`
 - `PUT /admin/pagamentos/{id}/aprovar`
 - `PUT /admin/pagamentos/{id}/rejeitar`
 
----
-
 ## Comentários (moderação)
 
 | Método | Endpoint | Descrição |
 |--------|----------|-------------|
-| DELETE | `/admin/comentarios/{id}` | Elimina (soft delete) qualquer comentário |
+| DELETE | `/admin/comentarios/{id}` | Remove (soft delete) qualquer comentário, independentemente do autor |
 
 ### `DELETE /admin/comentarios/{id}`
-**Response (204)**  
-**Erros:** `401`, `403`, `404`
 
----
+**Resposta:** `204 No Content`  
+**Erros:** `401` (não autenticado), `403` (não é admin), `404` (comentário não encontrado)
 
-## Estatísticas (opcional, melhoria futura)
+> **Nota:** O mesmo efeito pode ser obtido com `DELETE /comentarios/{id}` se o utilizador tiver role `ADMIN` (conforme documentado em [`comentario-endpoints.md`](./comentario-endpoints.md)). O endpoint `/admin/comentarios/{id}` é uma alternativa redundante para clareza.
+
+## Estatísticas (opcional – melhoria futura)
 
 | Método | Endpoint | Descrição |
 |--------|----------|-------------|
-| GET | `/admin/estatisticas` | Número de leitores, revistas vendidas, comentários, etc. |
+| GET | `/admin/estatisticas` | Retorna métricas como número de utilizadores, revistas vendidas, total de comentários, etc. |
 
-(Implementação futura, apenas placeholder.)
+Este endpoint não será implementado na versão inicial; fica registado como sugestão para versões futuras.
 
 ---
 
-**Notas:**
-- Todos os endpoints exigem `role = ADMIN`.
-- A moderação de comentários também pode ser feita via `DELETE /comentarios/{id}` com role ADMIN (já documentado em `comentario-endpoints.md`). O endpoint específico `/admin/comentarios/{id}` é redundante, mas pode existir por clareza.
-- Para simplicidade, podemos usar apenas o `DELETE /comentarios/{id}` com verificação de role no backend.
+*Estes endpoints permitem a gestão completa do sistema por administradores.*

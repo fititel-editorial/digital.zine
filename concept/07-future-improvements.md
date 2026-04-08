@@ -1,117 +1,88 @@
 # Melhorias Futuras
 
-Este documento regista as funcionalidades que foram identificadas durante a fase conceptual mas que **não serão implementadas na versão inicial** do sistema.  
-A decisão de adiar permite entregar um MVP (Mínimo Produto Viável) mais rapidamente, sem comprometer a qualidade ou a segurança.
+Nem tudo o que planeámos cabe na versão inicial. Algumas ideias ficaram no papel para serem amadurecidas ou simplesmente porque não são críticas para o primeiro lançamento. Este documento regista essas funcionalidades – um roteiro do que pode vir a seguir.
 
 ---
 
 ## 1. Histórico de Leitura (RF8)
 
-**Descrição original:**  
-O sistema deve gerar um histórico de acessos/leituras para que o utilizador saiba onde parou a leitura de cada revista.
+**A ideia original:**  
+Saber onde o utilizador parou a leitura em cada revista, para que ao regressar possa retomar do ponto exacto.
 
-**Estado actual:**  
-Não modelado. A funcionalidade será implementada numa versão futura.
+**O que temos agora:**  
+Nada. A funcionalidade não foi modelada.
 
-**Sugestão de implementação (quando for retomada):**
+**Como poderá ser implementada no futuro:**  
+Uma tabela `Leitura` com os campos `id_utilizador`, `id_revista`, `ultima_pagina` e os habituais timestamps de auditoria. O par `(id_utilizador, id_revista)` seria único, e cada vez que o utilizador avançasse para uma página, o campo `ultima_pagina` seria actualizado. O frontend poderia consultar um endpoint como `GET /utilizadores/me/historico/{id_revista}` para posicionar automaticamente a visualização.
 
-Criar uma tabela `Leitura` com os seguintes campos:
-
-| Campo | Tipo | Descrição |
-|-------|------|-------------|
-| `id` | `BIGINT` | PK |
-| `id_leitor` | `BIGINT` | FK para `Leitor(id)` |
-| `id_revista` | `BIGINT` | FK para `Revista(id)` |
-| `ultima_pagina` | `INT` | Número da última página lida |
-| `updatedAt` | `TIMESTAMP` | Última actualização (quando o leitor avançou) |
-| `createdAt` | `TIMESTAMP` | Criação do registo (primeiro acesso) |
-
-**Regras de negócio:**
-- Cada par `(id_leitor, id_revista)` é único.
-- Sempre que o leitor navegar para uma página, o campo `ultima_pagina` é actualizado.
-- O frontend pode consultar o endpoint `GET /leitores/me/historico/{id_revista}` para obter a última página lida e posicionar automaticamente.
-
-**Prioridade:** Média – melhoria de experiência do utilizador, mas não bloqueia a venda ou o acesso.
+**Prioridade:** Média. Não é essencial para vender ou aceder às revistas, mas melhora a experiência.
 
 ---
 
-## 2. Gestão de Amostras Configurável (RF6)
+## 2. Gestão Fina de Amostras (RF6)
 
-**Descrição original:**  
-O sistema deve permitir a gestão de "Amostras" (Preview), definindo quais páginas ou secções são de acesso público e quais são restritas.
+**A ideia original:**  
+Permitir que o administrador escolha, página a página, quais trechos da revista são visíveis na pré-visualização gratuita.
 
-**Estado actual:**  
-Na versão inicial, a amostra será implementada de forma **fixa**: uma percentagem (ex: 15%) das primeiras páginas de cada revista é pública.  
-Não há controlo fino por página.
+**O que temos agora:**  
+Uma solução simples e fixa: as primeiras 15% das páginas de cada revista são públicas. Não há controlo individual.
 
-**Sugestão de implementação futura:**
+**Como poderá ser evoluído:**  
+Adicionar um campo booleano `is_public_preview` na tabela `Pagina`. Assim, cada página pode ser marcada como “visível na amostra” ou “bloqueada”. Uma alternativa mais flexível seria uma tabela `AmostraConfig` para definir intervalos ou percentagens por edição.
 
-Adicionar um campo `is_public_preview` (booleano) na tabela `Pagina`.
-- `true`: página visível na pré-visualização (amostra).
-- `false`: página bloqueada, exige pagamento aprovado.
-
-Alternativa mais flexível: criar uma tabela `AmostraConfig` que define intervalos de páginas ou percentagens por edição.
-
-**Prioridade:** Baixa – pode ser implementada posteriormente sem quebrar a API (basta adicionar campo e ajustar a lógica de serviço).
+**Prioridade:** Baixa. Pode ser adicionada depois sem quebrar a API actual.
 
 ---
 
-## 3. Gateway de Pagamento Automático (RN - Validação de Pagamento)
+## 3. Pagamento Automático via Gateway
 
-**Descrição original:**  
-A validação de pagamentos pode ser feita via API bancária, em vez de comprovativo manual.
+**A ideia original:**  
+Eliminar a validação manual de comprovativos, integrando directamente com serviços como MCX Express ou Unitel Money.
 
-**Estado actual:**  
-Apenas validação manual (administrador analisa comprovativo enviado pelo leitor).
+**O que temos agora:**  
+Apenas o fluxo manual: o utilizador envia um comprovativo (PDF/imagem) e o administrador analisa e aprova.
 
-**Sugestão futura:**  
-Integrar com um gateway (ex: MCX Express, Unitel Money via API). O fluxo passaria a ser:
+**Como poderá ser evoluído:**  
+Integrar com um gateway que notifique o backend por webhook. O fluxo passaria a ser: o utilizador escolhe o método, é redireccionado para o gateway, e após o pagamento bem-sucedido o sistema muda o estado para `APROVADO` e gera o token de acesso automaticamente.
 
-1. Leitor escolhe método e é redireccionado para o gateway.
-2. O gateway notifica o backend via webhook.
-3. O estado do pagamento muda automaticamente para `APROVADO` e o `token_acesso` é gerado.
-
-**Prioridade:** Média – reduz trabalho administrativo, mas exige negociação com fornecedores e implementação de webhooks.
+**Prioridade:** Média. Reduz trabalho administrativo, mas exige negociação com fornecedores e implementação de webhooks.
 
 ---
 
-## 4. Sessão Única (Opcional)
+## 4. Sessão Única (Anti‑Pirataria)
 
-**Descrição original (RN - Sessão Única):**  
-Para evitar pirataria, o sistema pode impedir que a mesma conta visualize a revista paga em mais de dois dispositivos simultaneamente.
+**A ideia original:**  
+Impedir que a mesma conta seja usada em mais de dois dispositivos ao mesmo tempo para aceder a revistas pagas.
 
-**Estado actual:**  
-Não implementado. Qualquer leitor autenticado pode aceder a partir de múltiplos dispositivos.
+**O que temos agora:**  
+Nada. Qualquer utilizador autenticado pode aceder a partir de quantos dispositivos quiser.
 
-**Sugestão futura:**  
-Manter um registo de sessões activas (tabela `Sessao` com `id_leitor`, `token_jwt`, `ultima_atividade`). Ao aceder à revista completa, verificar se o número de sessões activas excede o limite.
+**Como poderá ser evoluído:**  
+Manter uma tabela de sessões activas (`id_utilizador`, `token_jwt`, `ultima_atividade`). Ao aceder a uma revista completa, verificar se o número de sessões activas ultrapassa o limite (ex: 2). Se sim, bloquear o acesso.
 
-**Prioridade:** Baixa – depende de análise de abuso real.
-
----
-
-## 5. Modelos 3D e Conteúdo "Phygital" Avançado
-
-**Descrição original (feature 1.1.2):**  
-Artigos técnicos que possuem botões para expandir, e quem sabe, no futuro, modelos em 3D que não cabem no papel.
-
-**Estado actual:**  
-Não modelado nem implementado.
-
-**Sugestão futura:**
-- Criar uma tabela `ConteudoExtra` (`id`, `id_pagina`, `tipo` (ex: 'MODELO_3D', 'VIDEO', 'ANIMACAO'), `url_recurso`).
-- O frontend renderizaria o recurso adicional quando disponível.
-
-**Prioridade:** Muito baixa – é uma funcionalidade inovadora mas não essencial para o lançamento.
+**Prioridade:** Baixa. Só faz sentido se houver abuso real; pode ser decidido mais tarde.
 
 ---
 
-## Como proceder com estas melhorias
+## 5. Modelos 3D e Conteúdo “Phygital” Avançado
 
-- Cada melhoria deve ser registada como uma **issue** no repositório (GitHub) com a etiqueta `enhancement`.
-- Quando forem implementadas, actualizar a documentação (`concept/`) para reflectir as mudanças no modelo de dados e na API.
-- As melhorias não devem quebrar a compatibilidade com versões anteriores da API.
+**A ideia original (feature 1.1.2):**  
+Artigos com botões para expandir, modelos 3D, animações – coisas que não cabem no papel.
+
+**O que temos agora:**  
+Nada. É uma visão futurista.
+
+**Como poderá ser evoluído:**  
+Criar uma tabela `ConteudoExtra` (`id`, `id_pagina`, `tipo`, `url_recurso`). O frontend, ao detectar que uma página tem conteúdos extra, renderizaria botões ou visualizações adicionais.
+
+**Prioridade:** Muito baixa. É um diferencial interessante, mas não essencial para o lançamento.
 
 ---
 
-*Este documento serve como roteiro para futuras iterações do projecto.*
+## Como lidar com estas melhorias
+
+Cada uma delas deve ser registada como uma *issue* no repositório (com a etiqueta `enhancement`). Quando forem implementadas, a documentação em `concept/` deve ser actualizada para reflectir as mudanças. O objectivo é não quebrar a compatibilidade com versões anteriores da API.
+
+---
+
+*Este documento serve como um roteiro – o que pode vir a seguir, não uma promessa de entrega.*

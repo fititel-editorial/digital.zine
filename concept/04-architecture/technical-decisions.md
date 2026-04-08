@@ -1,31 +1,31 @@
 # Decisões Técnicas
 
-Este documento regista as principais escolhas a nível de tecnologias e arquitectura do projecto, bem como a justificação para cada uma.
+Este documento regista as principais escolhas tecnológicas e arquitectónicas do projecto, com a respectiva justificação.
 
 ## 1. Linguagem e versão do Java
 
 **Escolha:** Java 21  
 **Justificação:**
-- LTS (Long Term Support) com suporte estendido.
-- Novas funcionalidades (records, pattern matching, virtual threads) que podem simplificar o código e melhorar a performance.
-- Compatibilidade com Spring Boot 4.x.
+- É uma versão LTS (Long Term Support), com suporte prolongado.
+- Oferece funcionalidades modernas (records, pattern matching, virtual threads) que podem simplificar o código e melhorar a performance.
+- Totalmente compatível com Spring Boot 4.x.
 
 ## 2. Framework principal
 
 **Escolha:** Spring Boot 4.0.3  
 **Justificação:**
-- Ecossistema maduro para aplicações empresariais.
-- Integração nativa com Spring Data JPA, Spring Security, Spring MVC.
+- Ecossistema maduro e amplamente utilizado para aplicações empresariais.
+- Integração nativa com Spring Data JPA, Spring Security e Spring MVC.
 - Suporte a Jakarta EE (em vez do antigo javax).
-- Facilidade de configuração e rapidez de desenvolvimento.
+- Configuração rápida e desenvolvimento ágil.
 
 ## 3. Banco de dados
 
 **Escolha:** PostgreSQL  
 **Justificação:**
-- Banco relacional robusto e open-source.
-- Suporte nativo a enumerações (para `genero`, `estado_pagamento`, `role`).
-- Bom desempenho para consultas complexas (ex: comentários aninhados, relatórios).
+- Banco relacional robusto e open‑source.
+- Suporte nativo a enumerações (útil para `genero`, `estado_pagamento`, `role`).
+- Bom desempenho em consultas complexas (comentários aninhados, relatórios).
 - Compatível com Flyway para migrações.
 
 ## 4. Migrações de esquema
@@ -36,11 +36,11 @@ Este documento regista as principais escolhas a nível de tecnologias e arquitec
 - Executa migrações automaticamente no arranque da aplicação.
 - Simples e confiável; evita inconsistências entre ambientes.
 
-## 5. Mapeamento objecto-relacional (ORM)
+## 5. Mapeamento objecto‑relacional (ORM)
 
 **Escolha:** Spring Data JPA (Hibernate)  
 **Justificação:**
-- Produtividade: reduz código repetitivo para CRUD.
+- Produtividade: reduz o código repetitivo para operações CRUD.
 - Suporte a auditoria automática (`@CreatedDate`, `@LastModifiedDate`).
 - Integração nativa com Spring Boot.
 
@@ -48,44 +48,44 @@ Este documento regista as principais escolhas a nível de tecnologias e arquitec
 
 **Escolha:** Mapper manual (código escrito explicitamente)  
 **Justificação:**
-- Controle total sobre o que é copiado (evita exposição acidental de campos sensíveis).
-- Sem dependência adicional (diferente de MapStruct ou ModelMapper).
-- Fácil de testar.
-- *Nota:* No futuro, se o projecto crescer, pode ser migrado para MapStruct sem impacto nas demais camadas.
+- Controlo total sobre o que é copiado – evita exposição acidental de campos sensíveis (como `palavraPasse`).
+- Sem dependências adicionais (diferente de MapStruct ou ModelMapper).
+- Fácil de testar e depurar.
+- *Nota:* Se o projecto crescer, pode ser migrado para MapStruct sem impacto nas restantes camadas.
 
 ## 7. Gestão de dependências e build
 
 **Escolha:** Maven  
 **Justificação:**
 - Padrão no ecossistema Spring.
-- Gerenciamento declarativo de dependências.
-- Integração com plugins (compiler, surefire, spring-boot-maven-plugin).
+- Gestão declarativa de dependências.
+- Integração com plugins (compiler, surefire, spring‑boot‑maven‑plugin).
 
 ## 8. Auditoria e Soft Delete
 
 **Escolha:** Campos `createdAt`, `updatedAt`, `deletedAt` em todas as tabelas.  
 **Justificação:**
-- Rastreabilidade de criação e modificação (obrigatório para conformidade e depuração).
+- Rastreabilidade de criação e modificação (necessário para conformidade e depuração).
 - Soft delete preserva o histórico e evita quebra de integridade referencial.
-- Permite recuperação de dados acidentalmente “apagados”.
-- Padrão comum em sistemas empresariais.
+- Permite recuperação de dados apagados acidentalmente.
+- É um padrão comum em sistemas empresariais.
 
 ## 9. Autenticação
 
 **Escolha:** JWT stateless  
 **Justificação:**
-- Escalável (não requer armazenamento de sessão no servidor).
-- Adequado para APIs REST que podem ser consumidas por múltiplos clientes (web, mobile).
-- Simples de implementar com Spring Security.
+- Escalável – não requer armazenamento de sessão no servidor.
+- Adequado para APIs REST consumidas por múltiplos clientes (web, mobile).
+- Implementação simples com Spring Security.
 
 ## 10. Arquitectura em camadas
 
 **Escolha:** Controller → Mapper → Service → Repository → Entity  
 **Justificação:**
-- Implementa fortemente o primeiro princípio da Orientação a Objectos (SOLID), por intermédio da separação clara de responsabilidades.
+- Segue o princípio da separação de responsabilidades (SOLID).
 - Facilita testes unitários e de integração.
-- Permite evolução independente das camadas.
-- Alinhada com as boas práticas de Clean Architecture (mas sem excesso de abstracções).
+- Permite evolução independente de cada camada.
+- Alinhada com as boas práticas de *Clean Architecture* (sem excesso de abstracções).
 
 ## 11. Validação de dados
 
@@ -93,14 +93,14 @@ Este documento regista as principais escolhas a nível de tecnologias e arquitec
 **Justificação:**
 - Validação declarativa, reduz código manual nos controladores.
 - Mensagens de erro padronizadas.
-- Integrada ao Spring MVC.
+- Integração nativa com Spring MVC.
 
-## 12. Decisões adiadas (para versões futuras)
+## 12. Decisões adiadas (versões futuras)
 
-- **Cache** (Redis) – para melhorar desempenho em revistas mais acedidas.
-- **API bancária** (gateway automático) – substituir validação manual de comprovativos.
-- **Sessão única** – controlo de múltiplos dispositivos.
-- **Modelos 3D** – suporte a conteúdos interactivos nas páginas.
+- **Cache (Redis):** para melhorar o desempenho em revistas muito acedidas.
+- **Gateway de pagamento automático:** substituir a validação manual de comprovativos por uma API bancária.
+- **Sessão única:** controlo de múltiplos dispositivos simultâneos.
+- **Modelos 3D:** suporte a conteúdos interactivos nas páginas.
 
 ---
 

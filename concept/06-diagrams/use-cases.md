@@ -1,6 +1,6 @@
 # Diagrama de Casos de Uso
 
-O diagrama abaixo apresenta os principais casos de uso do sistema, organizados por actor: **Leitor** (utilizador autenticado) e **Administrador**. O visitante não autenticado tem acesso apenas a visualização de amostras e registo.
+O diagrama abaixo organiza as funcionalidades do sistema por tipo de actor. O **Leitor** é um utilizador autenticado com `role = LEITOR`; o **Administrador** é um utilizador com `role = ADMIN`. O visitante não autenticado tem acesso apenas a registo, login e pré-visualização.
 
 ```mermaid
 flowchart TD
