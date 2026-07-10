@@ -31,3 +31,14 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Frontend ###
+/frontend/node_modules/
+/frontend/dist/
+/frontend/dist-ssr/
+/frontend/.vite/
+/frontend/.agents/
+/frontend/.impeccable/
+/frontend/*.local
+/frontend/.env*
+/frontend/.DS_Store
