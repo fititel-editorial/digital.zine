@@ -1,74 +1,79 @@
-# Segurança
+# Segurança — v3
+
+> Ver [`00-changelog-v3.md`](../00-changelog-v3.md). O fluxo de pagamento nesta versão é o decidido em reunião: gateway EMIS/GPO, numa primeira fase apenas Multicaixa Express. A implementação inicial do gateway é **simulada** — a equipa ainda vai contactar a EMIS para obter acesso e certificação oficial.
 
 ## Autenticação com JWT
 
-O sistema utiliza **JWT (JSON Web Token)** para autenticação stateless. O processo é simples:
+Inalterado face às versões anteriores:
 
-1. O utilizador envia `email` e `palavra-passe` para `/api/v1/auth/login`.
-2. As credenciais são validadas pelo serviço de autenticação.
-3. Se válidas, é gerado um token JWT, assinado com uma chave secreta definida em `application.properties`.
-4. O token é devolvido ao cliente no corpo da resposta.
-5. Nas requisições seguintes, o cliente envia o token no cabeçalho `Authorization: Bearer <token>`.
+1. O utilizador envia `email` e `palavra_passe` para `/api/v1/auth/login`.
+2. As credenciais são validadas.
+3. É gerado um JWT assinado, devolvido ao cliente.
+4. Requisições seguintes enviam `Authorization: Bearer <token>`.
 
-### Regras do token
+**Regras do token:** duração de 1 hora, payload com `id`, `email`, `role`. Renovação via `/api/v1/auth/refresh`.
 
-- **Duração:** 1 hora (configurável).
-- **Conteúdo do payload:** `id` do utilizador, `email` e `role` (`LEITOR` ou `ADMIN`).
-- **Renovação:** O endpoint `/api/v1/auth/refresh` recebe um token ainda válido (mas próximo do fim) e devolve um novo.
-- **Logout:** Como a API é stateless, o cliente apenas descarta o token. Opcionalmente, pode-se manter uma blacklist de tokens revogados – isso fica para uma versão futura.
+## Papéis e permissões
 
-## Papéis (roles) e permissões
+| Role | Permissões |
+|------|-------------|
+| `LEITOR` | Compra edições (via gateway), comenta no flipbook, marca favoritos, vê o seu perfil e histórico de compras |
+| `ADMIN` | Todas as permissões de `LEITOR`, mais: gere revistas/edições, atribui editores (`editor_edicao`), consulta logs, modera comentários, acompanha pagamentos |
 
-O campo `role` na tabela `Utilizador` define dois papéis:
+A atribuição de um utilizador como "editor" de uma edição (`editor_edicao`) **não é um terceiro `role`** — é uma associação, assumida como restrita a utilizadores `ADMIN` (ponto a confirmar, ver changelog).
 
-| Role   | Permissões |
-|--------|-------------|
-| `LEITOR` | Pode comprar revistas, comentar, ver o seu perfil e histórico de compras. |
-| `ADMIN`  | Tem todas as permissões de `LEITOR` e, adicionalmente, pode gerir revistas, validar pagamentos e aceder a dados administrativos. |
+## Acesso ao conteúdo — páginas do flipbook
 
-A protecção dos endpoints é feita com Spring Security, usando anotações como `@PreAuthorize`. A tabela abaixo ilustra alguns exemplos:
+O PDF completo nunca é exposto por nenhum endpoint da API pública. Cada página é processada de forma assíncrona (split + conversão para WebP) e disponibilizada individualmente via `flipbook_pagina.url_imagem`.
 
-| Endpoint | Método | Role necessária |
-|----------|--------|------------------|
-| `/api/v1/auth/**` | POST | público (sem token) |
-| `/api/v1/utilizadores/me` | GET | `LEITOR` ou `ADMIN` |
-| `/api/v1/revistas` | GET | público (apenas pré‑visualização) |
-| `/api/v1/revistas/{id}/completa` | GET | `LEITOR` (com pagamento aprovado) |
-| `/api/v1/revistas` | POST | `ADMIN` |
-| `/api/v1/pagamentos` | POST | `LEITOR` |
-| `/api/v1/admin/pagamentos/{id}/validar` | PUT | `ADMIN` |
-| `/api/v1/comentarios` | POST | `LEITOR` ou `ADMIN` |
-| `/api/v1/comentarios/{id}` | DELETE | `LEITOR` (apenas os seus) ou `ADMIN` (qualquer) |
+### Regras de acesso
+
+- Se `edicao.e_gratis = true`: todas as páginas do flipbook são acessíveis livremente.
+- Se `edicao.e_gratis = false`: a página de capa (`flipbook_pagina.tipo = 'CAPA'`) é sempre acessível como amostra; as páginas de conteúdo (`tipo = 'CONTEUDO'`) só ficam acessíveis a um `LEITOR` autenticado com um `Pagamento` no estado `PAGO` para aquela edição.
+
+## Pagamento via gateway EMIS/GPO — Multicaixa Express
+
+### Duas formas de pagamento, uma primeira fase
+
+1. **Express** — o leitor introduz o seu número de telemóvel associado ao MCX Express (ou lê um código QR); confirma o pagamento directamente na app MCX Express.
+2. **Referência (ATM/homebanking)** — o backend pede ao GPO a geração de uma referência de pagamento (Entidade + Referência + Valor); o leitor paga num ATM ou no homebanking do seu banco, fora da aplicação. Internamente a equipa refere-se a esta referência como "RUPE" — tecnicamente, RUPE é o sistema de referência específico para pagamentos ao Estado (via AGT); o mecanismo real aqui é o **pagamento por referência do GPO**, que funciona de forma semelhante mas não é o mesmo sistema. Ver nota no changelog.
+
+Ambas as formas são geridas pelo mesmo fluxo assíncrono: o backend inicia o pedido junto do GPO, e só sabe que o pagamento foi concluído quando recebe uma notificação (callback/webhook) do gateway — não há confirmação síncrona no momento do clique.
+
+### Estado do `Pagamento`
+
+```
+PENDENTE ──(leitor inicia pagamento no GPO)──► PROCESSANDO
+PROCESSANDO ──(callback confirma sucesso)──► PAGO
+PROCESSANDO ──(callback confirma falha)──► REJEITADO
+PROCESSANDO ──(sem confirmação dentro do prazo)──► EXPIRADO
+```
+
+`PAGO` é o único estado em que a edição fica liberada ao leitor.
+
+### Fluxo completo (visão de alto nível)
+
+1. O leitor escolhe a edição e o método (`MCX_EXPRESS` ou `REFERENCIA`) → `POST /pagamentos`.
+2. O backend chama a API do GPO para iniciar a transacção (Express: pede confirmação por telemóvel; Referência: pede geração de Entidade/Referência/Valor). Estado: `PROCESSANDO`.
+3. O leitor conclui o pagamento fora da aplicação (na app MCX Express, ou num ATM/homebanking).
+4. O GPO notifica o backend de forma assíncrona (o mecanismo exacto de notificação — webhook HTTP, polling periódico, ou outro — depende da forma de integração escolhida junto do banco de apoio; ver [`08-implementation-guides/payment-gateway-guide.md`](../08-implementation-guides/payment-gateway-guide.md)).
+5. O backend actualiza `pagamento.status`, `referencia_externa` e `data_pagamento`, e liberta o acesso à edição.
+6. O cliente faz *polling* a `GET /pagamentos/{id}` até ver o estado mudar.
+
+### Ambiente de desenvolvimento (antes do acesso oficial à EMIS)
+
+Enquanto o acesso oficial à EMIS/GPO não está disponível, o backend usa um **adaptador simulado** (`GatewayPagamentoService` com uma implementação `SimuladoGatewayPagamentoService`), que:
+
+- Gera uma referência fictícia com o mesmo formato esperado (Entidade/Referência/Valor).
+- Permite, num endpoint de desenvolvimento (não exposto em produção), simular manualmente a chegada da confirmação — para testar o fluxo completo sem depender do GPO real.
+- É substituído por uma implementação real (`GpoGatewayPagamentoService`) assim que houver credenciais, sem alterar o resto do sistema — o mesmo padrão de interface + implementação já usado no `StorageService`.
+
+Detalhe completo em [`08-implementation-guides/payment-gateway-guide.md`](../08-implementation-guides/payment-gateway-guide.md).
 
 ## Protecção de palavras-passe
 
-- As palavras-passe são armazenadas com **BCrypt** (usando `BCryptPasswordEncoder` do Spring Security).
-- Nunca são devolvidas em nenhum endpoint.
-- Durante o registo ou alteração de palavra-passe, o texto é enviado em plain text (por HTTPS) e codificado antes de ser persistido.
-
-## Considerações adicionais
-
-- **HTTPS:** Em produção, todas as comunicações devem ser encriptadas com TLS.
-- **CSRF:** Desabilitado (`http.csrf().disable()`) porque a API é stateless (JWT).
-- **CORS:** Configurado para permitir apenas origens específicas (ex.: domínio do frontend).
-- **Validação de tokens:** O filtro de autenticação verifica a assinatura, a expiração e (opcionalmente) a existência do utilizador na base de dados.
-- **Token de acesso à revista completa:** Além do JWT de autenticação, o endpoint `/revistas/{id}/completa` gera um **token de acesso curto** (5 minutos) para download do PDF. Esse token não substitui o JWT principal.
-
-## Fluxo completo de acesso a uma revista paga
-
-1. O utilizador autentica‑se e obtém o JWT normal.
-2. Solicita `/revistas/{id}/completa` enviando esse JWT.
-3. O backend verifica:
-   - JWT válido.
-   - Existência de um pagamento com `estado = APROVADO` para aquele utilizador e revista.
-4. Se tudo estiver correto, gera um **token temporário** (JWT curto contendo `id_revista` e `id_utilizador`).
-5. Devolve uma URL (ou o próprio token) que deve ser usada para aceder ao PDF, por exemplo: `/revistas/{id}/pdf?token=...`.
-6. O endpoint que serve o PDF valida o token temporário e disponibiliza o ficheiro.
+Inalterado: BCrypt, nunca devolvidas, HTTPS obrigatório em produção, CORS restrito ao domínio do frontend (Vercel).
 
 ## Relação com outros documentos
 
-Os detalhes de implementação da arquitectura (onde os filtros de segurança se encaixam) estão em [camadas](./layers.md). A justificação para a escolha do JWT em vez de sessões está documentada nas [decisões técnicas](./technical-decisions.md). A especificação completa dos endpoints de autenticação encontra‑se no módulo [API](../05-api/auth-endpoints.md).
-
----
-
-*Esta configuração assegura que apenas utilizadores autorizados acedem a recursos protegidos.*
+Modelo de dados: [`03-data-model/data-ditionary.md`](../03-data-model/data-ditionary.md). Endpoints: [`05-api/payment-endpoints.md`](../05-api/payment-endpoints.md), [`05-api/edition-endpoints.md`](../05-api/edition-endpoints.md). Diagrama de sequência: [`06-diagrams/ds-payment.md`](../06-diagrams/ds-payment.md). Infra-estrutura: [`04-architecture/deployment.md`](./deployment.md).

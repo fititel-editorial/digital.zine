@@ -1,4 +1,6 @@
-# Arquitectura em Camadas
+# Arquitectura em Camadas — v3
+
+> Ver [`00-changelog-v3.md`](../00-changelog-v3.md). Sem alterações estruturais — mantém-se a mesma arquitectura decidida em reunião. Único ajuste: exemplo de campo interno actualizado para a convenção de nomenclatura em português.
 
 O backend adopta uma arquitectura em camadas (*Layered Architecture*). Esta escolha garante separação clara de responsabilidades, facilidade de manutenção e testabilidade. As camadas organizam‑se da seguinte forma:
 
@@ -40,19 +42,19 @@ O backend adopta uma arquitectura em camadas (*Layered Architecture*). Esta esco
 
 ## Fluxo típico de uma requisição
 
-1. O **cliente** envia um JSON; o controlador recebe‑o como um DTO de *request* (ex.: `RevistaRequestDTO`).
+1. O **cliente** envia um JSON; o controlador recebe-o como um DTO de *request* (ex.: `EditionRequestDTO`).
 2. O controlador valida o DTO com `@Valid`.
-3. O controlador chama o mapper (`RevistaMapper.toEntity(request)`) para obter a entidade correspondente (`Revista`).
-4. O controlador invoca o serviço (`revistaService.criar(revista)`).
+3. O controlador chama o mapper (`EditionMapper.toEntity(request)`) para obter a entidade correspondente (`Edition`).
+4. O controlador invoca o serviço (`editionService.create(edition)`).
 5. O serviço executa a lógica de negócio e retorna a entidade persistida.
-6. O controlador usa novamente o mapper (`RevistaMapper.toResponse(revistaSalva)`) para construir o DTO de resposta (`RevistaResponseDTO`).
+6. O controlador usa novamente o mapper (`EditionMapper.toResponse(savedEdition)`) para construir o DTO de resposta (`EditionResponseDTO`).
 7. Por fim, o controlador devolve um `ResponseEntity` com o DTO e o código de status (ex.: `201 Created`).
 
 ## Benefícios desta arquitectura
 
 - **Manutenção facilitada** – cada camada evolui isoladamente.
 - **Testabilidade** – é possível testar cada camada separadamente, recorrendo a *mocks* para as dependências.
-- **Segurança** – a entidade nunca é exposta na API, evitando o vazamento de campos internos (como `palavraPasse` ou `deletedAt`).
+- **Segurança** – a entidade nunca é exposta na API, evitando o vazamento de campos internos (como `palavra_passe_hash` ou `removido_em`).
 - **Flexibilidade** – a estrutura dos DTOs pode ser alterada sem impactar o esquema do banco de dados.
 
 ## Relação com outros módulos da documentação

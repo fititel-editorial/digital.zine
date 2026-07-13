@@ -1,38 +1,56 @@
-# Modelo Relacional (MR)
+# Modelo Relacional (MR) — v3
 
-Após o mapeamento do Modelo Entidade‑Relacionamento, obtivemos as seguintes tabelas. Todas implementam os campos de auditoria (`createdAt`, `updatedAt`, `deletedAt`) e suporte a soft delete, conforme documentado em [`auditoria-softdelete.md`](./softdelete-audit.md).
+> Ver [`00-changelog-v3.md`](../00-changelog-v3.md).
 
-**Utilizador** (<u>id</u>, p_nome, sb_nome, data_nascimento, email, género, palavra_passe, role, createdAt, updatedAt, deletedAt)
+**utilizador** (<u>id</u>, p_nome, sb_nome, data_nascimento, email, palavra_passe_hash, role, criado_em, atualizado_em, removido_em)
 
-**Edição** (<u>id</u>, número, tema, lema, createdAt, updatedAt, deletedAt)
+**revista** (<u>id</u>, nome, criado_em, atualizado_em, removido_em)
 
-**Revista** (<u>id</u>, nome, ano_lançamento, url, preço, quantidade_páginas, id_edição, id_administrador, createdAt, updatedAt, deletedAt)
+**edicao** (<u>id</u>, id_revista, tema, lema, descricao, preco, paginas, numero, data_lancamento, e_gratis, criado_em, atualizado_em, removido_em)
 
-**Autor_Revista** (<u>id</u>, nome_autor, id_revista, createdAt, updatedAt, deletedAt)
+**pagamento** (<u>id</u>, id_utilizador, id_edicao, valor, status, metodo_pagamento, referencia_externa, data_pagamento, criado_em, atualizado_em)
 
-**Página** (<u>id</u>, numero_página, nome_projeto, id_revista, createdAt, updatedAt, deletedAt)
+**editor_edicao** (<u>id</u>, id_edicao, id_utilizador, criado_em)
 
-**Pagamento** (<u>id</u>, método_pagamento, data_pagamento, url_comprovativo, estado_pagamento, token_acesso, id_utilizador, id_revista, createdAt, updatedAt, deletedAt)
+**edicao_tag** (<u>id</u>, id_edicao, tag, criado_em)
 
-**Comentário** (<u>id</u>, texto, data_efetividade, id_página, id_utilizador, id_comentário_pai, createdAt, updatedAt, deletedAt)
+**edicao_artigo** (<u>id</u>, id_edicao, titulo, descricao, page, ordem, criado_em, atualizado_em, removido_em)
+
+**favorito** (<u>id</u>, id_utilizador, id_edicao, criado_em)
+
+**log** (<u>id</u>, nome_utilizador, email_utilizador, accao, target_type, target_id, criado_em)
+
+**flipbook_edicao** (<u>id</u>, id_edicao, estado_processamento, gerado_em, criado_em, atualizado_em)
+
+**flipbook_pagina** (<u>id</u>, id_flipbook, paginas, tipo, url_imagem, ordem, criado_em, atualizado_em, removido_em)
+
+**flipbook_comentario** (<u>id</u>, id_pagina, id_utilizador, texto, likes, x, y, criado_em, atualizado_em, removido_em)
 
 ## Chaves estrangeiras e integridade referencial
 
-- `Pagamento.id_utilizador` → `Utilizador.id`
-- `Pagamento.id_revista` → `Revista.id`
-- `Revista.id_edição` → `Edição.id`
-- `Revista.id_administrador` → `Utilizador.id` (deve corresponder a um utilizador com `role = 'ADMIN'`)
-- `Página.id_revista` → `Revista.id`
-- `Comentário.id_página` → `Página.id`
-- `Comentário.id_utilizador` → `Utilizador.id`
-- `Comentário.id_comentário_pai` → `Comentário.id`
-- `Autor_Revista.id_revista` → `Revista.id`
+- `edicao.id_revista` → `revista.id`
+- `pagamento.id_utilizador` → `utilizador.id`
+- `pagamento.id_edicao` → `edicao.id`
+- `editor_edicao.id_edicao` → `edicao.id`; `editor_edicao.id_utilizador` → `utilizador.id`; `UNIQUE(id_edicao, id_utilizador)`
+- `edicao_tag.id_edicao` → `edicao.id`; `UNIQUE(id_edicao, tag)`
+- `edicao_artigo.id_edicao` → `edicao.id`
+- `favorito.id_utilizador` → `utilizador.id`; `favorito.id_edicao` → `edicao.id`; `UNIQUE(id_utilizador, id_edicao)`
+- `flipbook_edicao.id_edicao` → `edicao.id`, `UNIQUE`
+- `flipbook_pagina.id_flipbook` → `flipbook_edicao.id`
+- `flipbook_comentario.id_pagina` → `flipbook_pagina.id`; `flipbook_comentario.id_utilizador` → `utilizador.id`
+- `log` não tem chaves estrangeiras formais — `target_type` + `target_id` referenciam qualquer entidade por convenção de aplicação.
 
-Todas as chaves estrangeiras utilizam `ON DELETE RESTRICT` – a remoção física é impedida; a eliminação lógica (soft delete) é feita através do campo `deletedAt`. As consultas padrão devem filtrar `deletedAt IS NULL`.
+Chaves estrangeiras com `ON DELETE RESTRICT`. A remoção lógica é feita através de `removido_em`, onde a tabela o suportar (ver nota abaixo). As consultas padrão filtram `removido_em IS NULL`.
 
-## Notas
+## Tabelas sem soft delete
 
-- A tabela `Utilizador` substitui a antiga `Leitor`. O campo `role` (`LEITOR` ou `ADMIN`) define o nível de permissão.
-- A tabela `Autor_Revista` mantém‑se como tabela de ligação simples, pois a entidade Autor não possui atributos adicionais nem comportamento próprio.
-- O campo `token_acesso` em `Pagamento` é gerado apenas quando o estado passa para `APROVADO`; é único e pode ser usado para acesso temporário ao PDF completo.
-- O auto‑relacionamento `Comentário.id_comentário_pai` permite respostas aninhadas (comentários filhos).
+`pagamento` (registo financeiro), `editor_edicao`, `edicao_tag`, `favorito` e `log` são registos de associação/evento — removem-se fisicamente (`DELETE`) quando aplicável, ou simplesmente não se removem (caso do `log`, que é imutável).
+
+## O que mudou face às versões anteriores da documentação
+
+- A nomenclatura de auditoria **na base de dados** passou de inglês (`createdAt/updatedAt/deletedAt`) para português (`criado_em/atualizado_em/removido_em`) — decisão da reunião. No código Java, os campos da entidade mantêm-se em inglês, mapeados por `@Column`.
+- `Revista` e `Edicao` trocaram de papel: `Revista` é agora o título/marca; `Edicao` é a unidade vendável (antes, "Revista" acumulava as duas coisas).
+- `Comentario`/`ComentarioPagina`/`ComentarioRevista` (propostas anteriores) foram substituídos por um único modelo, `flipbook_comentario`, sem resposta aninhada, com `likes`.
+- `Pagina` foi substituída por `flipbook_pagina`, ligada a `flipbook_edicao` em vez de directamente a `edicao`.
+- Novas tabelas: `editor_edicao`, `edicao_tag`, `edicao_artigo`, `favorito`, `flipbook_edicao`.
+- `Autor_Revista` (de propostas anteriores) não tem equivalente no novo MER — ponto em aberto.

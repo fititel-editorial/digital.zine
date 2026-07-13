@@ -1,88 +1,77 @@
-# Melhorias Futuras
+# Melhorias Futuras — v3
 
-Nem tudo o que planeámos cabe na versão inicial. Algumas ideias ficaram no papel para serem amadurecidas ou simplesmente porque não são críticas para o primeiro lançamento. Este documento regista essas funcionalidades – um roteiro do que pode vir a seguir.
+> Ver [`00-changelog-v3.md`](./00-changelog-v3.md). Lista revista após a reunião de arquitectura final.
 
 ---
 
 ## 1. Histórico de Leitura (RF8)
 
-**A ideia original:**  
-Saber onde o utilizador parou a leitura em cada revista, para que ao regressar possa retomar do ponto exacto.
+Mantém-se adiado. Proposta: tabela `Leitura` (`id_utilizador`, `id_edicao`, `ultima_pagina`), par único, endpoint `GET /utilizadores/me/historico/{idEdicao}`.
 
-**O que temos agora:**  
-Nada. A funcionalidade não foi modelada.
-
-**Como poderá ser implementada no futuro:**  
-Uma tabela `Leitura` com os campos `id_utilizador`, `id_revista`, `ultima_pagina` e os habituais timestamps de auditoria. O par `(id_utilizador, id_revista)` seria único, e cada vez que o utilizador avançasse para uma página, o campo `ultima_pagina` seria actualizado. O frontend poderia consultar um endpoint como `GET /utilizadores/me/historico/{id_revista}` para posicionar automaticamente a visualização.
-
-**Prioridade:** Média. Não é essencial para vender ou aceder às revistas, mas melhora a experiência.
+**Prioridade:** Média.
 
 ---
 
-## 2. Gestão Fina de Amostras (RF6)
+## 2. Estatísticas administrativas
 
-**A ideia original:**  
-Permitir que o administrador escolha, página a página, quais trechos da revista são visíveis na pré-visualização gratuita.
+Não foi decidido na reunião se entra já no escopo. Endpoint `GET /admin/estatisticas` com métricas gerais (utilizadores, edições vendidas, receita, comentários).
 
-**O que temos agora:**  
-Uma solução simples e fixa: as primeiras 15% das páginas de cada revista são públicas. Não há controlo individual.
-
-**Como poderá ser evoluído:**  
-Adicionar um campo booleano `is_public_preview` na tabela `Pagina`. Assim, cada página pode ser marcada como “visível na amostra” ou “bloqueada”. Uma alternativa mais flexível seria uma tabela `AmostraConfig` para definir intervalos ou percentagens por edição.
-
-**Prioridade:** Baixa. Pode ser adicionada depois sem quebrar a API actual.
+**Prioridade:** A confirmar com a equipa.
 
 ---
 
-## 3. Pagamento Automático via Gateway
+## 3. URLs de imagem com expiração + rate limiting anti-scraping
 
-**A ideia original:**  
-Eliminar a validação manual de comprovativos, integrando directamente com serviços como MCX Express ou Unitel Money.
+O acesso à imagem de cada página é hoje verificado em cada pedido, mas a resposta em si não expira nem tem limite de frequência. Reforço recomendado: URLs assinadas com expiração curta, e rate limiting por utilizador/IP no endpoint de imagem.
 
-**O que temos agora:**  
-Apenas o fluxo manual: o utilizador envia um comprovativo (PDF/imagem) e o administrador analisa e aprova.
-
-**Como poderá ser evoluído:**  
-Integrar com um gateway que notifique o backend por webhook. O fluxo passaria a ser: o utilizador escolhe o método, é redireccionado para o gateway, e após o pagamento bem-sucedido o sistema muda o estado para `APROVADO` e gera o token de acesso automaticamente.
-
-**Prioridade:** Média. Reduz trabalho administrativo, mas exige negociação com fornecedores e implementação de webhooks.
+**Prioridade:** Média — reavaliar cedo se houver sinais de scraping sequencial.
 
 ---
 
-## 4. Sessão Única (Anti‑Pirataria)
+## 4. Tabela de likes únicos por utilizador
 
-**A ideia original:**  
-Impedir que a mesma conta seja usada em mais de dois dispositivos ao mesmo tempo para aceder a revistas pagas.
+`FlipbookComentario.likes` é hoje um contador simples. Para impedir múltiplos likes do mesmo utilizador, é necessária uma tabela `flipbook_comentario_like` — não estava no MER da reunião, fica como proposta.
 
-**O que temos agora:**  
-Nada. Qualquer utilizador autenticado pode aceder a partir de quantos dispositivos quiser.
-
-**Como poderá ser evoluído:**  
-Manter uma tabela de sessões activas (`id_utilizador`, `token_jwt`, `ultima_atividade`). Ao aceder a uma revista completa, verificar se o número de sessões activas ultrapassa o limite (ex: 2). Se sim, bloquear o acesso.
-
-**Prioridade:** Baixa. Só faz sentido se houver abuso real; pode ser decidido mais tarde.
+**Prioridade:** Média — antes de lançar publicamente, para evitar manipulação do contador.
 
 ---
 
-## 5. Modelos 3D e Conteúdo “Phygital” Avançado
+## 5. Reconciliação de pagamentos presos em `PROCESSANDO`
 
-**A ideia original (feature 1.1.2):**  
-Artigos com botões para expandir, modelos 3D, animações – coisas que não cabem no papel.
+Job periódico que consulta directamente a API do GPO para pagamentos presos há mais tempo do que o esperado, cobrindo o caso de uma notificação nunca chegar.
 
-**O que temos agora:**  
-Nada. É uma visão futurista.
+**Prioridade:** Média — recomendado antes de escalar o volume de transacções.
 
-**Como poderá ser evoluído:**  
-Criar uma tabela `ConteudoExtra` (`id`, `id_pagina`, `tipo`, `url_recurso`). O frontend, ao detectar que uma página tem conteúdos extra, renderizaria botões ou visualizações adicionais.
+---
 
-**Prioridade:** Muito baixa. É um diferencial interessante, mas não essencial para o lançamento.
+## 6. Sessão única (anti-pirataria)
+
+Mantém-se adiado.
+
+**Prioridade:** Baixa.
+
+---
+
+## 7. Modelos 3D e conteúdo "phygital" avançado
+
+Mantém-se adiado.
+
+**Prioridade:** Muito baixa.
+
+---
+
+## 8. Decisão sobre acesso directo do frontend ao object storage
+
+Ver nota em [`06-diagrams/ds-navigation.md`](./06-diagrams/ds-navigation.md) — decidir se as imagens passam sempre pelo backend, ou se o frontend acede directamente ao Supabase/R2 via URLs assinadas.
+
+**Prioridade:** Alta — impacta directamente a arquitectura de servir conteúdo; deve ser decidido cedo, não é uma melhoria de longo prazo.
 
 ---
 
 ## Como lidar com estas melhorias
 
-Cada uma delas deve ser registada como uma *issue* no repositório (com a etiqueta `enhancement`). Quando forem implementadas, a documentação em `concept/` deve ser actualizada para reflectir as mudanças. O objectivo é não quebrar a compatibilidade com versões anteriores da API.
+Cada uma deve ser registada como uma *issue* no repositório (etiqueta `enhancement`). Quando implementadas, a documentação em `concept/` deve ser actualizada.
 
 ---
 
-*Este documento serve como um roteiro – o que pode vir a seguir, não uma promessa de entrega.*
+*Este documento serve como um roteiro — o que pode vir a seguir, não uma promessa de entrega.*

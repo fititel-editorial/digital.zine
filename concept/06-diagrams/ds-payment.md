@@ -1,68 +1,85 @@
-# Diagrama de Sequência – Pagamento com Comprovativo
+# Diagrama de Sequência — Pagamento — v3
 
-O fluxo abaixo mostra o processo completo desde a criação do pedido de pagamento pelo utilizador até à validação manual pelo administrador e o subsequente acesso à revista completa.
+> Ver [`00-changelog-v3.md`](../00-changelog-v3.md) e [`04-architecture/security.md`](../04-architecture/security.md). **Corrigido para Mermaid** (linguagem obrigatória para todos os diagramas desta documentação).
+
+## Fluxo — Multicaixa Express (confirmação por telemóvel)
 
 ```mermaid
 sequenceDiagram
-    participant Utilizador
+    actor Leitor
     participant Frontend
-    participant Controller as PagamentoController
-    participant Service as PagamentoService
-    participant Repository as PagamentoRepository
-    participant Admin
+    participant Backend
+    participant GPO as GPO (EMIS)
 
-    Utilizador->>Frontend: Selecciona revista e clica "Comprar"
-    Frontend->>Controller: POST /api/v1/pagamentos { id_revista, metodo }
-    Controller->>Service: criarPagamento(utilizadorId, revistaId, metodo)
-    Service->>Repository: save(pagamento)
-    Repository-->>Service: Pagamento com estado = PENDENTE
-    Service-->>Controller: PagamentoDTO (id, estado)
-    Controller-->>Frontend: 201 Created (dados do pagamento)
-    Frontend-->>Utilizador: Mostra formulário para upload do comprovativo
+    Leitor->>Frontend: Escolhe edição + Express
+    Frontend->>Backend: POST /pagamentos { idEdicao, metodoPagamento: MCX_EXPRESS, telemovel }
+    Backend->>Backend: cria Pagamento, status=PROCESSANDO
+    Backend->>GPO: iniciarPagamentoExpress()
+    GPO-->>Leitor: pede confirmação no nº de telemóvel
+    Backend-->>Frontend: "confirme na app MCX Express"
+    Frontend-->>Leitor: instrução de confirmação
 
-    Utilizador->>Frontend: Envia ficheiro (PDF/IMG)
-    Frontend->>Controller: POST /api/v1/pagamentos/{id}/comprovativo (multipart)
-    Controller->>Service: anexarComprovativo(pagamentoId, ficheiro)
-    Service->>Service: Valida formato e tamanho
-    Service->>Service: Salva ficheiro no storage (S3/local)
-    Service->>Repository: atualizar url_comprov e estado = ANALISE
-    Repository-->>Service: OK
-    Service-->>Controller: PagamentoDTO (estado = ANALISE)
-    Controller-->>Frontend: 200 OK (comprovativo recebido)
-    Frontend-->>Utilizador: "Comprovativo enviado. Aguarde validação."
+    Leitor->>GPO: abre app MCX Express e confirma
+    GPO->>Backend: notificação assíncrona (referenciaExterna, estado)
+    Backend->>Backend: status=PAGO, grava Log
 
-    Admin->>Frontend: Acede ao painel administrativo
-    Frontend->>Controller: GET /api/v1/admin/pagamentos?estado=ANALISE
-    Controller->>Service: listarPagamentosPorEstado("ANALISE")
-    Service->>Repository: findPagamentosByEstado()
-    Repository-->>Service: Lista de pagamentos
-    Service-->>Controller: List<PagamentoDTO>
-    Controller-->>Frontend: Lista de pagamentos pendentes
-    Frontend-->>Admin: Mostra lista com comprovativos
+    Frontend->>Backend: GET /pagamentos/{id} (polling)
+    Backend-->>Frontend: status=PAGO
+    Frontend-->>Leitor: acede à edição completa
+```
 
-    Admin->>Frontend: Clica "Aprovar" num pagamento
-    Frontend->>Controller: PUT /api/v1/admin/pagamentos/{id}/aprovar
-    Controller->>Service: aprovarPagamento(pagamentoId)
-    Service->>Service: Gera token_acesso único (UUID ou JWT)
-    Service->>Repository: atualizar estado = APROVADO, token_acesso = token
-    Repository-->>Service: OK
-    Service-->>Controller: PagamentoDTO (estado = APROVADO, token)
-    Controller-->>Frontend: 200 OK (pagamento aprovado)
-    Frontend-->>Admin: "Pagamento aprovado. Token gerado."
+## Fluxo — Referência (ATM / homebanking)
 
-    Note over Utilizador, Frontend: Mais tarde, o utilizador solicita a revista
-    Utilizador->>Frontend: Clica "Ler revista completa"
-    Frontend->>Controller: GET /api/v1/revistas/{id}/completa (com JWT normal)
-    Controller->>Service: verificarAcesso(utilizadorId, revistaId)
-    Service->>Repository: verificarPagamentoAprovado(utilizadorId, revistaId)
-    alt Pagamento aprovado
-        Repository-->>Service: token_acesso válido
-        Service->>Service: Gera URL temporária ou redirecciona para PDF
-        Service-->>Controller: URL ou token curto
-        Controller-->>Frontend: 302 Redirect ou JSON com link
-        Frontend-->>Utilizador: Carrega PDF completo
-    else Sem pagamento aprovado
-        Service-->>Controller: 403 Forbidden
-        Controller-->>Frontend: "Acesso negado. Revista não adquirida."
-        Frontend-->>Utilizador: Mostra mensagem de erro
+```mermaid
+sequenceDiagram
+    actor Leitor
+    participant Frontend
+    participant Backend
+    participant GPO as GPO (EMIS)
+
+    Leitor->>Frontend: Escolhe edição + Referência
+    Frontend->>Backend: POST /pagamentos { idEdicao, metodoPagamento: REFERENCIA }
+    Backend->>Backend: cria Pagamento, status=PROCESSANDO
+    Backend->>GPO: gerarReferencia()
+    GPO-->>Backend: Entidade / Referência / Valor
+    Backend-->>Frontend: { entidade, referencia, valor }
+    Frontend-->>Leitor: mostra dados para pagamento
+
+    Leitor->>GPO: paga no ATM ou homebanking (fora da aplicação)
+    GPO->>Backend: notificação assíncrona (compensação, normalmente ao fim do dia)
+    Backend->>Backend: status=PAGO, grava Log
+
+    Frontend->>Backend: GET /pagamentos/{id} (polling)
+    Backend-->>Frontend: status=PAGO
+    Frontend-->>Leitor: acede à edição completa
+```
+
+## Variante em desenvolvimento — gateway simulado
+
+```mermaid
+sequenceDiagram
+    actor Dev as Admin/Dev
+    participant Backend
+
+    Dev->>Backend: POST /dev/pagamentos/{id}/simular { resultado: "PAGO" }
+    Backend->>Backend: SimuladoGatewayPagamentoService actualiza o Pagamento
+    Backend->>Backend: status=PAGO, grava Log
+    Note over Backend: Só existe em dev/local — nunca exposto em produção
+```
+
+## Fluxo de falha ou expiração
+
+```mermaid
+sequenceDiagram
+    participant GPO as GPO (EMIS)
+    participant Backend
+
+    alt Notificação de falha
+        GPO->>Backend: notificação de falha
+        Backend->>Backend: status=REJEITADO, grava Log
+    else Sem notificação dentro do prazo
+        Backend->>Backend: job agendado: status=EXPIRADO
     end
+```
+
+Ver [`08-implementation-guides/payment-gateway-guide.md`](../08-implementation-guides/payment-gateway-guide.md) para a implementação simulada.
