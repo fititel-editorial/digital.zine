@@ -26,6 +26,7 @@ Os roles disponíveis: `admin`, `editor`, `reader`.
 Autentica um utilizador e retorna um token JWT.
 
 **Request:**
+
 ```json
 {
   "email": "joao@email.com",
@@ -34,6 +35,7 @@ Autentica um utilizador e retorna um token JWT.
 ```
 
 **Response (200):**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIs...",
@@ -47,6 +49,7 @@ Autentica um utilizador e retorna um token JWT.
 ```
 
 **Response (401):**
+
 ```json
 {
   "error": "invalid_credentials",
@@ -61,6 +64,7 @@ Autentica um utilizador e retorna um token JWT.
 Regista um novo leitor.
 
 **Request:**
+
 ```json
 {
   "name": "Novo Leitor",
@@ -70,11 +74,13 @@ Regista um novo leitor.
 ```
 
 **Constraints:**
+
 - `name`: 2–150 caracteres
 - `email`: formato email válido, único no sistema
 - `password`: mínimo 6 caracteres
 
 **Response (201):**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIs...",
@@ -88,6 +94,7 @@ Regista um novo leitor.
 ```
 
 **Response (409):**
+
 ```json
 {
   "error": "email_taken",
@@ -104,6 +111,7 @@ Retorna o utilizador autenticado.
 **Roles:** any
 
 **Response (200):**
+
 ```json
 {
   "email": "joao@email.com",
@@ -122,6 +130,7 @@ Invalida o token actual.
 **Roles:** any
 
 **Response (200):**
+
 ```json
 {
   "message": "Sessão terminada."
@@ -146,6 +155,7 @@ Lista edições publicadas, ordenadas por data descendente.
 | `q` | string | — | Pesquisa por título/descrição |
 
 **Response (200):**
+
 ```json
 {
   "data": [
@@ -155,7 +165,7 @@ Lista edições publicadas, ordenadas por data descendente.
       "title": "Dados que Contam Histórias",
       "subtitle": "Inovação, Talento e Futuro Digital em Angola",
       "description": "Histórias, entrevistas e análises...",
-      "cover": "/images/datastream-cover.png",
+      "cover": "/images/revista-2025.png",
       "date": "Maio 2026",
       "dateIso": "2026-05-12",
       "pages": 120,
@@ -181,6 +191,7 @@ Lista edições publicadas, ordenadas por data descendente.
 Retorna detalhe completo de uma edição.
 
 **Response (200):**
+
 ```json
 {
   "id": 24,
@@ -188,7 +199,7 @@ Retorna detalhe completo de uma edição.
   "title": "Dados que Contam Histórias",
   "subtitle": "Inovação, Talento e Futuro Digital em Angola",
   "description": "Histórias, entrevistas e análises...",
-  "cover": "/images/datastream-cover.png",
+  "cover": "/images/revista-2025.png",
   "date": "Maio 2026",
   "dateIso": "2026-05-12",
   "editor": "Ana Pereira",
@@ -220,6 +231,7 @@ Retorna detalhe completo de uma edição.
 ```
 
 **Response (404):**
+
 ```json
 {
   "error": "not_found",
@@ -237,6 +249,7 @@ Retorna dados do flipbook (páginas e comentários internos).
 — Se `isFree === false` → requer `role: reader` + compra verificada
 
 **Response (200):**
+
 ```json
 {
   "vol": 24,
@@ -245,7 +258,7 @@ Retorna dados do flipbook (páginas e comentários internos).
     {
       "id": 1,
       "type": "cover",
-      "image": "/images/datastream-cover.png",
+      "image": "/images/revista-2025.png",
       "num": null
     },
     {
@@ -272,6 +285,7 @@ Retorna dados do flipbook (páginas e comentários internos).
 ```
 
 **Response (403) — sem acesso:**
+
 ```json
 {
   "error": "purchase_required",
@@ -290,6 +304,7 @@ Lista compras do leitor autenticado.
 **Roles:** reader
 
 **Response (200):**
+
 ```json
 {
   "data": [
@@ -299,7 +314,7 @@ Lista compras do leitor autenticado.
         "id": 23,
         "vol": 23,
         "title": "Design e Criatividade Artificial",
-        "cover": "/images/nebula-artist-cover.png"
+        "cover": "/images/revista-2025.png"
       },
       "purchasedAt": "2026-06-01T10:30:00Z"
     }
@@ -316,6 +331,7 @@ Compra uma edição.
 **Roles:** reader
 
 **Request:**
+
 ```json
 {
   "editionId": 23
@@ -323,6 +339,7 @@ Compra uma edição.
 ```
 
 **Response (201):**
+
 ```json
 {
   "id": 3,
@@ -332,6 +349,7 @@ Compra uma edição.
 ```
 
 **Response (409) — já comprada:**
+
 ```json
 {
   "error": "already_purchased",
@@ -348,6 +366,7 @@ Remove uma compra (reembolso).
 **Roles:** reader (apenas próprias), admin
 
 **Response (200):**
+
 ```json
 {
   "message": "Compra removida."
@@ -365,6 +384,7 @@ Lista favoritos do leitor autenticado.
 **Roles:** reader
 
 **Response (200):**
+
 ```json
 {
   "data": [
@@ -374,7 +394,7 @@ Lista favoritos do leitor autenticado.
         "id": 24,
         "vol": 24,
         "title": "Dados que Contam Histórias",
-        "cover": "/images/datastream-cover.png"
+        "cover": "/images/revista-2025.png"
       },
       "createdAt": "2026-05-15T09:00:00Z"
     }
@@ -391,6 +411,7 @@ Adiciona edição aos favoritos (toggle).
 **Roles:** reader
 
 **Request:**
+
 ```json
 {
   "editionId": 24
@@ -398,6 +419,7 @@ Adiciona edição aos favoritos (toggle).
 ```
 
 **Response (201):**
+
 ```json
 {
   "message": "Edição adicionada aos favoritos.",
@@ -406,6 +428,7 @@ Adiciona edição aos favoritos (toggle).
 ```
 
 Se já estava favoritada, remove:
+
 ```json
 {
   "message": "Edição removida dos favoritos.",
@@ -423,6 +446,7 @@ Comentários públicos de leitores numa edição.
 **Protegido:** não
 
 **Response (200):**
+
 ```json
 {
   "data": [
@@ -448,6 +472,7 @@ Adiciona comentário a uma edição.
 **Roles:** reader
 
 **Request:**
+
 ```json
 {
   "text": "Adorei esta edição!"
@@ -455,9 +480,11 @@ Adiciona comentário a uma edição.
 ```
 
 **Constraints:**
+
 - `text`: 1–500 caracteres
 
 **Response (201):**
+
 ```json
 {
   "id": 6,
@@ -493,6 +520,7 @@ Cria uma nova edição.
 **Roles:** admin, editor
 
 **Request:**
+
 ```json
 {
   "vol": 25,
@@ -509,9 +537,7 @@ Cria uma nova edição.
   "isFree": false,
   "tags": ["Tecnologia"],
   "overview": "Texto longo...",
-  "articles": [
-    { "title": "Artigo 1", "description": "Desc...", "page": 10 }
-  ],
+  "articles": [{ "title": "Artigo 1", "description": "Desc...", "page": 10 }],
   "technicalDetails": {
     "isbn": "978-3-16-148410-4",
     "format": "Digital (PDF/EPUB) + Flipbook",
@@ -524,6 +550,7 @@ Cria uma nova edição.
 ```
 
 **Response (201):**
+
 ```json
 {
   "id": 25,
@@ -544,6 +571,7 @@ Actualiza uma edição.
 **Body:** mesmos campos que POST (parcial)
 
 **Response (200):**
+
 ```json
 {
   "id": 25,
@@ -561,6 +589,7 @@ Remove uma edição.
 **Roles:** admin
 
 **Response (200):**
+
 ```json
 {
   "message": "Edição removida."
@@ -586,6 +615,7 @@ Cria um novo editor.
 **Roles:** admin
 
 **Request:**
+
 ```json
 {
   "name": "Novo Editor",
@@ -622,6 +652,7 @@ Lista todos os leitores com estatísticas.
 **Roles:** admin
 
 **Response (200):**
+
 ```json
 {
   "data": [
@@ -649,6 +680,7 @@ Detalhe completo de um leitor, com listas de compras, favoritos e comentários.
 **Roles:** admin
 
 **Response (200):**
+
 ```json
 {
   "id": 1,
@@ -694,6 +726,7 @@ Métricas do dashboard.
 **Roles:** admin
 
 **Response (200):**
+
 ```json
 {
   "totalEditions": 42,
@@ -716,6 +749,7 @@ Receita por edição e por mês.
 **Roles:** admin
 
 **Response (200):**
+
 ```json
 {
   "byEdition": [
@@ -758,6 +792,7 @@ Lista de logs de actividade.
 | `offset` | int | Paginação |
 
 **Response (200):**
+
 ```json
 {
   "data": [
@@ -792,6 +827,7 @@ Métricas do dashboard.
 **Roles:** admin, editor
 
 O conteúdo varia por role:
+
 - **Admin**: todas as métricas (incluindo receita e leitores)
 - **Editor**: apenas métricas de edições e editores (sem receita)
 
@@ -812,6 +848,7 @@ Upload de imagem/PDF para a CDN.
 | `type` | string | `cover` ou `pdf` |
 
 **Response (201):**
+
 ```json
 {
   "url": "https://cdn.fittel.co/covers/edition-25-cover.png"
@@ -819,6 +856,7 @@ Upload de imagem/PDF para a CDN.
 ```
 
 **Constraints:**
+
 - Formatos permitidos: PNG, JPG, JPEG, PDF
 - Tamanho máximo: 10MB (capa), 50MB (PDF)
 
@@ -826,52 +864,52 @@ Upload de imagem/PDF para a CDN.
 
 ## 13. Resumo de Endpoints
 
-| Método | Path | Auth | Roles | Descrição |
-|--------|------|------|-------|-----------|
-| POST | `/auth/login` | — | — | Login |
-| POST | `/auth/register` | — | — | Registo |
-| GET | `/auth/me` | ✓ | any | Perfil actual |
-| POST | `/auth/logout` | ✓ | any | Logout |
-| GET | `/editions` | — | — | Lista edições |
-| GET | `/editions/:id` | — | — | Detalhe edição |
-| GET | `/editions/:id/flipbook` | cond. | — | Flipbook |
-| GET | `/editions/:id/comments` | — | — | Comentários |
-| POST | `/editions/:id/comments` | ✓ | reader | Novo comentário |
-| GET | `/purchases` | ✓ | reader | Minhas compras |
-| POST | `/purchases` | ✓ | reader | Comprar edição |
-| DELETE | `/purchases/:id` | ✓ | reader, admin | Remover compra |
-| GET | `/favorites` | ✓ | reader | Meus favoritos |
-| POST | `/favorites` | ✓ | reader | Toggle favorito |
-| GET | `/admin/dashboard` | ✓ | admin, editor | Dashboard |
-| GET | `/admin/editions` | ✓ | admin, editor | Lista edições (gestão) |
-| POST | `/admin/editions` | ✓ | admin, editor | Criar edição |
-| PUT | `/admin/editions/:id` | ✓ | admin, editor | Actualizar edição |
-| DELETE | `/admin/editions/:id` | ✓ | admin | Remover edição |
-| GET | `/admin/editors` | ✓ | admin | Lista editores |
-| POST | `/admin/editors` | ✓ | admin | Criar editor |
-| PUT | `/admin/editors/:id` | ✓ | admin | Actualizar editor |
-| DELETE | `/admin/editors/:id` | ✓ | admin | Remover editor |
-| GET | `/admin/readers` | ✓ | admin | Lista leitores |
-| GET | `/admin/readers/:id` | ✓ | admin | Detalhe leitor |
-| GET | `/admin/reports/overview` | ✓ | admin | Métricas |
-| GET | `/admin/reports/revenue` | ✓ | admin | Receita |
-| GET | `/admin/logs` | ✓ | admin | Logs |
-| POST | `/upload` | ✓ | admin, editor | Upload ficheiro |
+| Método | Path                      | Auth  | Roles         | Descrição              |
+| ------ | ------------------------- | ----- | ------------- | ---------------------- |
+| POST   | `/auth/login`             | —     | —             | Login                  |
+| POST   | `/auth/register`          | —     | —             | Registo                |
+| GET    | `/auth/me`                | ✓     | any           | Perfil actual          |
+| POST   | `/auth/logout`            | ✓     | any           | Logout                 |
+| GET    | `/editions`               | —     | —             | Lista edições          |
+| GET    | `/editions/:id`           | —     | —             | Detalhe edição         |
+| GET    | `/editions/:id/flipbook`  | cond. | —             | Flipbook               |
+| GET    | `/editions/:id/comments`  | —     | —             | Comentários            |
+| POST   | `/editions/:id/comments`  | ✓     | reader        | Novo comentário        |
+| GET    | `/purchases`              | ✓     | reader        | Minhas compras         |
+| POST   | `/purchases`              | ✓     | reader        | Comprar edição         |
+| DELETE | `/purchases/:id`          | ✓     | reader, admin | Remover compra         |
+| GET    | `/favorites`              | ✓     | reader        | Meus favoritos         |
+| POST   | `/favorites`              | ✓     | reader        | Toggle favorito        |
+| GET    | `/admin/dashboard`        | ✓     | admin, editor | Dashboard              |
+| GET    | `/admin/editions`         | ✓     | admin, editor | Lista edições (gestão) |
+| POST   | `/admin/editions`         | ✓     | admin, editor | Criar edição           |
+| PUT    | `/admin/editions/:id`     | ✓     | admin, editor | Actualizar edição      |
+| DELETE | `/admin/editions/:id`     | ✓     | admin         | Remover edição         |
+| GET    | `/admin/editors`          | ✓     | admin         | Lista editores         |
+| POST   | `/admin/editors`          | ✓     | admin         | Criar editor           |
+| PUT    | `/admin/editors/:id`      | ✓     | admin         | Actualizar editor      |
+| DELETE | `/admin/editors/:id`      | ✓     | admin         | Remover editor         |
+| GET    | `/admin/readers`          | ✓     | admin         | Lista leitores         |
+| GET    | `/admin/readers/:id`      | ✓     | admin         | Detalhe leitor         |
+| GET    | `/admin/reports/overview` | ✓     | admin         | Métricas               |
+| GET    | `/admin/reports/revenue`  | ✓     | admin         | Receita                |
+| GET    | `/admin/logs`             | ✓     | admin         | Logs                   |
+| POST   | `/upload`                 | ✓     | admin, editor | Upload ficheiro        |
 
 ## 14. Códigos de Erro Comuns
 
-| Código | Significado |
-|--------|-------------|
-| `invalid_credentials` | Email ou senha incorrectos |
-| `email_taken` | Email já registado |
-| `not_found` | Recurso não encontrado |
-| `purchase_required` | É necessário comprar a edição |
-| `already_purchased` | Edição já foi comprada |
-| `forbidden` | Sem permissão para o recurso |
-| `unauthorized` | Token ausente ou inválido |
-| `validation_error` | Dados inválidos (campos específicos no `fields`) |
-| `file_too_large` | Ficheiro excede o tamanho máximo |
-| `invalid_file_type` | Formato de ficheiro não permitido |
+| Código                | Significado                                      |
+| --------------------- | ------------------------------------------------ |
+| `invalid_credentials` | Email ou senha incorrectos                       |
+| `email_taken`         | Email já registado                               |
+| `not_found`           | Recurso não encontrado                           |
+| `purchase_required`   | É necessário comprar a edição                    |
+| `already_purchased`   | Edição já foi comprada                           |
+| `forbidden`           | Sem permissão para o recurso                     |
+| `unauthorized`        | Token ausente ou inválido                        |
+| `validation_error`    | Dados inválidos (campos específicos no `fields`) |
+| `file_too_large`      | Ficheiro excede o tamanho máximo                 |
+| `invalid_file_type`   | Formato de ficheiro não permitido                |
 
 ## 15. Paginação
 
@@ -880,6 +918,7 @@ Endpoints que retornam listas usam o formato:
 **Request:** `?limit=20&offset=0`
 
 **Response:**
+
 ```json
 {
   "data": [ ... ],
