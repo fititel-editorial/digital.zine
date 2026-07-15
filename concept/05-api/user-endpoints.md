@@ -1,4 +1,6 @@
-# Endpoints de Utilizador
+# Endpoints de Utilizador — v3
+
+> Ver [`00-changelog-v3.md`](../00-changelog-v3.md). Campos de auditoria actualizados para português; `/me/comentarios` reflecte o modelo único de comentário (sem `respostasCount`); adicionada referência a `/me/favoritos`.
 
 **Prefix:** `/api/v1/utilizadores`
 
@@ -19,7 +21,7 @@ Enviar no cabeçalho: `Authorization: Bearer <token>`.
 | GET | `/me/comentarios` | Lista comentários escritos pelo utilizador |
 | DELETE | `/me` | Soft delete da própria conta |
 
-> **Nota:** O histórico de leitura (RF8) será adicionado em `/me/historico` numa versão futura (ver [melhorias futuras](../07-melhorias-futuras.md)).
+> **Nota:** Favoritos ficaram num recurso próprio — ver [`favorites-endpoints.md`](./favorites-endpoints.md). O histórico de leitura (RF8) será adicionado em `/me/historico` numa versão futura (ver [melhorias futuras](../07-future-improvements.md)).
 
 ---
 
@@ -38,31 +40,31 @@ Enviar no cabeçalho: `Authorization: Bearer <token>`.
 **Erros:** `400` (password fraca), `401`, `422` (actual incorrecta).
 
 ### `GET /me/compras`
-**Query params:** `estado`, `pagina`, `tamanho`  
-**Response (200):** lista paginada de pagamentos (com `id`, `metodo`, `estado`, `dataPagamento`, `revista` resumida).  
+**Query params:** `status`, `pagina`, `tamanho`  
+**Response (200):** lista paginada de pagamentos (com `id`, `metodoPagamento`, `status`, `dataPagamento`, `edicao` resumida).  
 **Erros:** `401`.
 
 ### `GET /me/compras/{id}`
-**Response (200):** detalhe do pagamento (inclui `urlComprovativo`, `tokenAcesso` se aprovado).  
+**Response (200):** detalhe do pagamento (inclui `referenciaExterna`).  
 **Erros:** `401`, `403` (pagamento de outro), `404`.
 
 ### `GET /me/comentarios`
 **Query params:** `pagina`, `tamanho`  
-**Response (200):** lista paginada de comentários (com `id`, `texto`, `dataEfetiv`, `pagina` resumida, `respostasCount`).  
+**Response (200):** lista paginada de comentários (com `id`, `texto`, `likes`, `x`, `y`, `pagina` resumida).  
 **Erros:** `401`.
 
 ### `DELETE /me`
 **Response (204)** – soft delete da conta.  
-**Erros:** `401`, `409` (se houver pagamentos aprovados – regra de negócio opcional).
+**Erros:** `401`, `409` (se houver pagamentos `PAGO` – regra de negócio opcional).
 
 ---
 
 ## Notas de implementação
 
-- A palavra‑passe nunca é devolvida.
-- Operações de escrita actualizam `updatedAt`.
-- Utilizadores com `deletedAt` não nulo são rejeitados pelo filtro JWT.
-- As listagens ignoram registos com `deletedAt` não nulo.
+- A palavra-passe nunca é devolvida.
+- Operações de escrita actualizam `atualizado_em`.
+- Utilizadores com `removido_em` não nulo são rejeitados pelo filtro JWT.
+- As listagens ignoram registos com `removido_em` não nulo.
 
 ---
 

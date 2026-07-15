@@ -1,127 +1,196 @@
-# Dicionário de Dados
+# Dicionário de Dados — v3
 
-## Tabela `Utilizador`
+> Ver [`00-changelog-v3.md`](../00-changelog-v3.md).
 
-Armazena todos os utilizadores da plataforma – sejam leitores comuns ou administradores. A distinção é feita pelo campo `role`.
+## Tabela `utilizador`
 
 | Campo | Tipo SQL | Restrições | Descrição |
 |-------|----------|-------------|------------|
 | `id` | `BIGINT` | PK, NOT NULL, AUTO_INCREMENT | Identificador único |
 | `p_nome` | `VARCHAR(50)` | NOT NULL | Primeiro nome |
 | `sb_nome` | `VARCHAR(100)` | NOT NULL | Sobrenome |
-| `email` | `VARCHAR(150)` | UNIQUE, NOT NULL | E‑mail de acesso (utilizado no login) |
-| `genero` | `VARCHAR(20)` | NOT NULL | ENUM('MASCULINO','FEMININO') |
-| `palavra_passe` | `VARCHAR(255)` | NOT NULL | Hash BCrypt – nunca armazenada em texto plano |
-| `data_nasc` | `DATE` | NOT NULL | Data de nascimento (para validação de idade) |
+| `data_nascimento` | `DATE` | NOT NULL | Data de nascimento |
+| `email` | `VARCHAR(150)` | UNIQUE, NOT NULL | E-mail de acesso |
+| `palavra_passe_hash` | `VARCHAR(255)` | NOT NULL | Hash BCrypt |
 | `role` | `VARCHAR(20)` | NOT NULL, DEFAULT 'LEITOR' | ENUM('LEITOR','ADMIN') |
-| `createdAt` | `TIMESTAMP` | NOT NULL, DEFAULT CURRENT_TIMESTAMP | Auditoria – momento da criação |
-| `updatedAt` | `TIMESTAMP` | NULL ON UPDATE | Auditoria – última modificação |
-| `deletedAt` | `TIMESTAMP` | NULL | Soft delete – preenchido apenas se a conta foi removida |
+| `criado_em` | `TIMESTAMP` | NOT NULL | Data de criação |
+| `atualizado_em` | `TIMESTAMP` | NULL | Última alteração |
+| `removido_em` | `TIMESTAMP` | NULL | Soft delete |
 
 ---
 
-## Tabela `Revista`
+## Tabela `revista`
 
-| Campo | Tipo SQL | Restrições | Descrição |
-|-------|----------|-------------|------------|
-| `id` | `BIGINT` | PK, NOT NULL, AUTO_INCREMENT | Identificador único |
-| `nome` | `VARCHAR(100)` | NOT NULL | Título da revista |
-| `ano_lancamento` | `INT` | NOT NULL | Ano de publicação |
-| `url` | `VARCHAR(500)` | NOT NULL | Caminho (ou URL) do ficheiro PDF |
-| `preco` | `DECIMAL(10,2)` | NOT NULL | Valor da revista (0.00 para edições gratuitas) |
-| `qtd_paginas` | `INT` | NOT NULL | Número total de páginas do PDF |
-| `id_edicao` | `BIGINT` | FK (Edicao.id), NOT NULL | Edição a que pertence |
-| `id_administrador` | `BIGINT` | FK (Utilizador.id), NOT NULL | Administrador que fez o upload (deve ter `role = 'ADMIN'`) |
-| `createdAt` | `TIMESTAMP` | NOT NULL | Auditoria |
-| `updatedAt` | `TIMESTAMP` | NULL | Auditoria |
-| `deletedAt` | `TIMESTAMP` | NULL | Soft delete |
-
----
-
-## Tabela `Edicao`
-
-Agrupa revistas por edição da FITITEL.
+Título/marca da publicação (ex.: "FITITEL"). Agrupa várias edições.
 
 | Campo | Tipo SQL | Restrições | Descrição |
 |-------|----------|-------------|------------|
 | `id` | `BIGINT` | PK, NOT NULL, AUTO_INCREMENT | Identificador |
-| `numero` | `INT` | NOT NULL | Número da edição (ex: 12) |
-| `tema` | `VARCHAR(150)` | NOT NULL | Tema central daquela edição |
-| `lema` | `VARCHAR(200)` | NULL | Frase de efeito ou lema |
-| `createdAt` | `TIMESTAMP` | NOT NULL | Auditoria |
-| `updatedAt` | `TIMESTAMP` | NULL | Auditoria |
-| `deletedAt` | `TIMESTAMP` | NULL | Soft delete |
+| `nome` | `VARCHAR(100)` | NOT NULL | Nome da revista/marca |
+| `criado_em` | `TIMESTAMP` | NOT NULL | Data de criação |
+| `atualizado_em` | `TIMESTAMP` | NULL | Última alteração |
+| `removido_em` | `TIMESTAMP` | NULL | Soft delete |
 
 ---
 
-## Tabela `Autor_Revista`
+## Tabela `edicao`
 
-Resolve o relacionamento N:N entre revistas e autores. Cada autor é apenas um nome (sem entidade própria).
+A unidade efectivamente vendida e lida — o que antes era chamado de "revista" em versões anteriores da documentação.
 
 | Campo | Tipo SQL | Restrições | Descrição |
 |-------|----------|-------------|------------|
 | `id` | `BIGINT` | PK, NOT NULL, AUTO_INCREMENT | Identificador |
-| `nome_autor` | `VARCHAR(150)` | NOT NULL | Nome do autor ou colaborador |
-| `id_revista` | `BIGINT` | FK (Revista.id), NOT NULL | Revista associada |
-| `createdAt` | `TIMESTAMP` | NOT NULL | Auditoria |
-| `updatedAt` | `TIMESTAMP` | NULL | Auditoria |
-| `deletedAt` | `TIMESTAMP` | NULL | Soft delete |
+| `id_revista` | `BIGINT` | FK (revista.id), NOT NULL | Revista a que pertence |
+| `tema` | `VARCHAR(150)` | NOT NULL | Tema central da edição |
+| `lema` | `VARCHAR(200)` | NULL | Frase de efeito |
+| `descricao` | `TEXT` | NULL | Descrição longa |
+| `preco` | `BIGINT` | NOT NULL, DEFAULT 0 | Preço em cêntimos (kwanza). `0` quando `e_gratis = true` |
+| `paginas` | `INT` | NOT NULL, DEFAULT 0 | Preenchido automaticamente após o processamento do flipbook |
+| `numero` | `INT` | NOT NULL | Número da edição |
+| `data_lancamento` | `DATE` | NOT NULL | Data de publicação |
+| `e_gratis` | `BOOLEAN` | NOT NULL, DEFAULT FALSE | Se `true`, toda a edição é gratuita |
+| `criado_em` | `TIMESTAMP` | NOT NULL | Data de criação |
+| `atualizado_em` | `TIMESTAMP` | NULL | Última alteração |
+| `removido_em` | `TIMESTAMP` | NULL | Soft delete |
+
+**Nota:** `preco` em cêntimos evita problemas de arredondamento em relatórios de receita — herdado de análise anterior, mantido por ser boa prática, não por decisão explícita da reunião.
 
 ---
 
-## Tabela `Pagina`
-
-Cada página de uma revista, com metadados opcionais sobre o projecto nela descrito.
+## Tabela `pagamento`
 
 | Campo | Tipo SQL | Restrições | Descrição |
 |-------|----------|-------------|------------|
 | `id` | `BIGINT` | PK, NOT NULL, AUTO_INCREMENT | Identificador |
-| `num_pagina` | `INT` | NOT NULL | Número da página no PDF |
-| `nome_projeto` | `VARCHAR(150)` | NULL | Nome do projecto tecnológico (se houver) |
-| `id_revista` | `BIGINT` | FK (Revista.id), NOT NULL | Revista a que pertence |
-| `createdAt` | `TIMESTAMP` | NOT NULL | Auditoria |
-| `updatedAt` | `TIMESTAMP` | NULL | Auditoria |
-| `deletedAt` | `TIMESTAMP` | NULL | Soft delete |
+| `id_utilizador` | `BIGINT` | FK (utilizador.id), NOT NULL | Comprador |
+| `id_edicao` | `BIGINT` | FK (edicao.id), NOT NULL | Edição comprada |
+| `valor` | `BIGINT` | NOT NULL | Valor pago, em cêntimos |
+| `status` | `VARCHAR(20)` | NOT NULL | ENUM('PENDENTE','PROCESSANDO','PAGO','REJEITADO','EXPIRADO') |
+| `metodo_pagamento` | `VARCHAR(20)` | NOT NULL | ENUM('MCX_EXPRESS','REFERENCIA') |
+| `referencia_externa` | `VARCHAR(100)` | NULL, UNIQUE | Referência/identificador devolvido pelo GPO (Entidade+Referência, ou id de transacção Express) |
+| `data_pagamento` | `TIMESTAMP` | NULL | Momento em que o GPO confirmou o pagamento |
+| `criado_em` | `TIMESTAMP` | NOT NULL | Data de criação |
+| `atualizado_em` | `TIMESTAMP` | NULL | Última alteração de estado |
+
+**Nota:** sem `removido_em` — registos financeiros não são eliminados.
 
 ---
 
-## Tabela `Pagamento`
+## Tabela `editor_edicao`
 
-Regista cada tentativa de compra. O acesso à revista completa só é libertado quando o estado é `APROVADO`.
+Associação entre utilizadores e edições, para atribuir responsabilidade editorial sem criar um terceiro `role`.
 
 | Campo | Tipo SQL | Restrições | Descrição |
 |-------|----------|-------------|------------|
 | `id` | `BIGINT` | PK, NOT NULL, AUTO_INCREMENT | Identificador |
-| `metodo` | `VARCHAR(30)` | NOT NULL | ENUM('MCX_EXPRESS','TRANSFERENCIA','UNITEL_MONEY') |
-| `estado` | `VARCHAR(20)` | NOT NULL | ENUM('PENDENTE','ANALISE','APROVADO','REJEITADO') |
-| `url_comprov` | `VARCHAR(500)` | NULL | Link para o comprovativo (armazenado em S3 ou similar) |
-| `token_acesso` | `VARCHAR(255)` | UNIQUE, NULL | Gerado apenas quando `estado = 'APROVADO'` |
-| `id_utilizador` | `BIGINT` | FK (Utilizador.id), NOT NULL | Comprador |
-| `id_revista` | `BIGINT` | FK (Revista.id), NOT NULL | Revista adquirida |
-| `createdAt` | `TIMESTAMP` | NOT NULL | Auditoria |
-| `updatedAt` | `TIMESTAMP` | NULL | Auditoria |
-| `deletedAt` | `TIMESTAMP` | NULL | Soft delete |
+| `id_edicao` | `BIGINT` | FK (edicao.id), NOT NULL | Edição |
+| `id_utilizador` | `BIGINT` | FK (utilizador.id), NOT NULL | Utilizador atribuído como editor — **assumido `role = ADMIN`, a confirmar** |
+| `criado_em` | `TIMESTAMP` | NOT NULL | Data da atribuição |
+
+`UNIQUE (id_edicao, id_utilizador)` — não faz sentido atribuir o mesmo utilizador duas vezes à mesma edição.
 
 ---
 
-## Tabela `Comentario`
-
-Comentários dos utilizadores sobre páginas específicas. Suporta respostas aninhadas através do auto‑relacionamento `id_pai`.
+## Tabela `edicao_tag`
 
 | Campo | Tipo SQL | Restrições | Descrição |
 |-------|----------|-------------|------------|
 | `id` | `BIGINT` | PK, NOT NULL, AUTO_INCREMENT | Identificador |
+| `id_edicao` | `BIGINT` | FK (edicao.id), NOT NULL | Edição etiquetada |
+| `tag` | `VARCHAR(50)` | NOT NULL | Texto da etiqueta (ex.: "inteligência artificial") |
+| `criado_em` | `TIMESTAMP` | NOT NULL | Data de criação |
+
+`UNIQUE (id_edicao, tag)` — evita etiquetas duplicadas na mesma edição.
+
+---
+
+## Tabela `edicao_artigo`
+
+| Campo | Tipo SQL | Restrições | Descrição |
+|-------|----------|-------------|------------|
+| `id` | `BIGINT` | PK, NOT NULL, AUTO_INCREMENT | Identificador |
+| `id_edicao` | `BIGINT` | FK (edicao.id), NOT NULL | Edição a que pertence |
+| `titulo` | `VARCHAR(200)` | NOT NULL | Título do artigo |
+| `descricao` | `TEXT` | NULL | Resumo/descrição |
+| `page` | `INT` | NOT NULL | Página do flipbook onde o artigo começa |
+| `ordem` | `INT` | NOT NULL, DEFAULT 0 | Ordem de apresentação no índice da edição |
+| `criado_em` | `TIMESTAMP` | NOT NULL | Data de criação |
+| `atualizado_em` | `TIMESTAMP` | NULL | Última alteração |
+| `removido_em` | `TIMESTAMP` | NULL | Soft delete |
+
+**Nota:** não existe campo de autor — ponto em aberto, ver changelog.
+
+---
+
+## Tabela `favorito`
+
+| Campo | Tipo SQL | Restrições | Descrição |
+|-------|----------|-------------|------------|
+| `id` | `BIGINT` | PK, NOT NULL, AUTO_INCREMENT | Identificador |
+| `id_utilizador` | `BIGINT` | FK (utilizador.id), NOT NULL | Quem marcou |
+| `id_edicao` | `BIGINT` | FK (edicao.id), NOT NULL | Edição marcada |
+| `criado_em` | `TIMESTAMP` | NOT NULL | Data em que marcou como favorita |
+
+`UNIQUE (id_utilizador, id_edicao)`.
+
+---
+
+## Tabela `log`
+
+| Campo | Tipo SQL | Restrições | Descrição |
+|-------|----------|-------------|------------|
+| `id` | `BIGINT` | PK, NOT NULL, AUTO_INCREMENT | Identificador |
+| `nome_utilizador` | `VARCHAR(150)` | NOT NULL | Nome de quem executou a acção (cópia — sobrevive à eliminação da conta) |
+| `email_utilizador` | `VARCHAR(150)` | NOT NULL | E-mail de quem executou a acção |
+| `accao` | `VARCHAR(50)` | NOT NULL | Ex.: `criou`, `editou`, `removeu`, `aprovou_pagamento` |
+| `target_type` | `VARCHAR(50)` | NOT NULL | Ex.: `edicao`, `pagamento`, `comentario` |
+| `target_id` | `BIGINT` | NOT NULL | Identificador do recurso afectado |
+| `criado_em` | `TIMESTAMP` | NOT NULL | Momento da acção — **registo imutável**, sem `atualizado_em`/`removido_em` |
+
+---
+
+## Tabela `flipbook_edicao`
+
+| Campo | Tipo SQL | Restrições | Descrição |
+|-------|----------|-------------|------------|
+| `id` | `BIGINT` | PK, NOT NULL, AUTO_INCREMENT | Identificador |
+| `id_edicao` | `BIGINT` | FK (edicao.id), UNIQUE, NOT NULL | Edição associada (1:1) |
+| `estado_processamento` | `VARCHAR(20)` | NOT NULL, DEFAULT 'PROCESSANDO' | ENUM('PROCESSANDO','PRONTO','FALHOU') — **campo proposto, a confirmar** |
+| `gerado_em` | `TIMESTAMP` | NULL | Momento em que o processamento terminou com sucesso — **campo proposto, a confirmar** |
+| `criado_em` | `TIMESTAMP` | NOT NULL | Data de criação |
+| `atualizado_em` | `TIMESTAMP` | NULL | Última alteração de estado |
+
+---
+
+## Tabela `flipbook_pagina`
+
+| Campo | Tipo SQL | Restrições | Descrição |
+|-------|----------|-------------|------------|
+| `id` | `BIGINT` | PK, NOT NULL, AUTO_INCREMENT | Identificador |
+| `id_flipbook` | `BIGINT` | FK (flipbook_edicao.id), NOT NULL | Flipbook a que pertence |
+| `paginas` | `INT` | NOT NULL | Número da página no PDF original |
+| `tipo` | `VARCHAR(20)` | NOT NULL, DEFAULT 'CONTEUDO' | ENUM('CAPA','CONTEUDO') — controla, entre outras coisas, apresentação no frontend |
+| `url_imagem` | `VARCHAR(500)` | NOT NULL | Caminho/URL da imagem gerada (WebP), no object storage |
+| `ordem` | `INT` | NOT NULL | Ordem de exibição no flipbook |
+| `criado_em` | `TIMESTAMP` | NOT NULL | Data de criação |
+| `atualizado_em` | `TIMESTAMP` | NULL | Última alteração |
+| `removido_em` | `TIMESTAMP` | NULL | Soft delete |
+
+---
+
+## Tabela `flipbook_comentario`
+
+| Campo | Tipo SQL | Restrições | Descrição |
+|-------|----------|-------------|------------|
+| `id` | `BIGINT` | PK, NOT NULL, AUTO_INCREMENT | Identificador |
+| `id_pagina` | `BIGINT` | FK (flipbook_pagina.id), NOT NULL | Página comentada |
+| `id_utilizador` | `BIGINT` | FK (utilizador.id), NOT NULL | Autor do comentário |
 | `texto` | `TEXT` | NOT NULL | Conteúdo do comentário |
-| `data_efetiv` | `TIMESTAMP` | NOT NULL | Data/hora da publicação |
-| `id_pagina` | `BIGINT` | FK (Pagina.id), NOT NULL | Página comentada |
-| `id_utilizador` | `BIGINT` | FK (Utilizador.id), NOT NULL | Autor do comentário |
-| `id_pai` | `BIGINT` | FK (Comentario.id), NULL | Auto‑relacionamento – se preenchido, indica que é uma resposta |
-| `createdAt` | `TIMESTAMP` | NOT NULL | Auditoria |
-| `updatedAt` | `TIMESTAMP` | NULL | Auditoria |
-| `deletedAt` | `TIMESTAMP` | NULL | Soft delete |
+| `likes` | `INT` | NOT NULL, DEFAULT 0 | Contador de gostos |
+| `x` | `DECIMAL(5,2)` | NOT NULL | Posição horizontal, em percentagem da imagem (0–100) |
+| `y` | `DECIMAL(5,2)` | NOT NULL | Posição vertical, em percentagem da imagem (0–100) |
+| `criado_em` | `TIMESTAMP` | NOT NULL | Data de criação |
+| `atualizado_em` | `TIMESTAMP` | NULL | Última alteração |
+| `removido_em` | `TIMESTAMP` | NULL | Soft delete |
 
----
-
-## Nota sobre auditoria e soft delete
-
-Todas as tabelas seguem o mesmo padrão: os campos `createdAt`, `updatedAt` e `deletedAt` permitem rastrear a criação, modificação e eliminação lógica de cada registo. Mais detalhes podem ser encontrados no documento [`auditoria-softdelete.md`](./softdelete-audit.md).
+**Nota:** não existe `id_pai` — este modelo substitui o anterior de comentários com resposta aninhada. Um "like" é a única forma de interacção sobre um comentário existente.

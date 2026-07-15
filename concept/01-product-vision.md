@@ -1,4 +1,6 @@
-# Visão do Produto – Revista Digital FITITEL
+# Visão do Produto – Revista Digital FITITEL — v3
+
+> Ver [`00-changelog-v3.md`](./00-changelog-v3.md). Terminologia actualizada: "revista" nesta visão corresponde agora a uma **edição** no modelo de dados (a FITITEL, como marca, é a "revista"); pagamento e comentários actualizados.
 
 ## O que é isto?
 
@@ -8,10 +10,10 @@ Queremos transformá‑la numa **plataforma digital interactiva** – onde ler a
 
 ## O que o sistema permite?
 
-- **Acesso gratuito a amostras** – qualquer visitante pode ler as primeiras páginas de cada edição, como uma “degustação”.
-- **Compra e desbloqueio** – quem pagar (por transferência, MCX Express ou Unitel Money) vê a revista completa.
-- **Comentários** – qualquer leitor autenticado pode destacar um trecho de uma página e iniciar uma discussão.
-- **Administração simples** – a equipa do ITEL consegue publicar novas edições, validar comprovativos e moderar comentários.
+- **Acesso gratuito a amostras** – qualquer visitante pode ler a capa de cada edição paga; edições marcadas como gratuitas ficam totalmente abertas.
+- **Compra e desbloqueio** – quem pagar via Multicaixa Express (por telemóvel ou por referência, através do gateway GPO da EMIS) vê a edição completa.
+- **Comentários** – qualquer leitor autenticado pode comentar num ponto específico de uma página e receber "gostos" de outros leitores.
+- **Administração simples** – a equipa do ITEL consegue publicar novas edições, atribuir editores responsáveis e moderar comentários.
 
 ## Para quem é?
 
@@ -22,8 +24,8 @@ Queremos transformá‑la numa **plataforma digital interactiva** – onde ler a
 
 1. **Navegação contextual** – uma linha do tempo que permite saltar entre edições antigas e novas, como se folheasse a revista.
 2. **Conteúdo “phygital”** – artigos com botões para expandir (e, no futuro, modelos 3D que não cabem no papel).
-3. **Sistema de comentários** – destaque de trechos e discussão embutida na própria página.
-4. **Modelo de amostra** – o visitante prova antes de comprar, em vez de encontrar um muro de pagamento.
+3. **Sistema de comentários** – anotações posicionadas na própria página, com "gostos" em vez de fios de discussão.
+4. **Modelo de amostra** – o visitante vê a capa antes de comprar (ou a edição inteira, se marcada como gratuita), em vez de encontrar um muro de pagamento.
 
 ## Objectivos de negócio
 
@@ -33,8 +35,8 @@ Queremos transformá‑la numa **plataforma digital interactiva** – onde ler a
 
 ## Restrições que vêm da visão
 
-- Apenas utilizadores autenticados **com pagamento aprovado** podem ver a revista completa.
-- Os administradores validam manualmente os comprovativos (até que um *gateway* automático seja integrado).
+- Apenas utilizadores autenticados **com pagamento confirmado (`status = PAGO`)** podem ver a edição completa.
+- A confirmação do pagamento é automática, via gateway GPO da EMIS (Multicaixa Express) — numa fase de desenvolvimento inicial, simulada, até haver acesso oficial à EMIS.
 - O sistema deve ser modular – a arquitectura em camadas e os mappers manuais foram escolhidos para permitir evoluções como modelos 3D sem reescrever tudo.
 
 ---

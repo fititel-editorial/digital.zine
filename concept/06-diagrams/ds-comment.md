@@ -1,83 +1,79 @@
-# Diagrama de Sequência – Comentários e Respostas
+# Diagrama de Sequência – Comentários e Likes — v3
 
-O fluxo abaixo mostra como os utilizadores criam, respondem, editam e eliminam comentários nas páginas da revista. A hierarquia é mantida através do campo `id_pai`.
+> Ver [`00-changelog-v3.md`](../00-changelog-v3.md). Substitui por completo a versão anterior (que tinha resposta aninhada e dois modelos de comentário). Agora existe apenas `FlipbookComentario`, sem resposta, com `likes`.
 
 ```mermaid
 sequenceDiagram
     participant Utilizador
     participant Frontend
-    participant Controller as ComentarioController
-    participant Service as ComentarioService
-    participant Repository as ComentarioRepository
+    participant Controller as FlipbookComentarioController
+    participant Service as FlipbookComentarioService
+    participant Repository as FlipbookComentarioRepository
 
-    Utilizador->>Frontend: Abre página da revista (ex: página 15)
+    Utilizador->>Frontend: Abre a página 15 do flipbook
     Frontend->>Controller: GET /api/v1/paginas/{id}/comentarios
-    Controller->>Service: listarComentarios(paginaId)
-    Service->>Repository: findComentariosByPaginaIdOrderByData(paginaId)
-    Repository-->>Service: Lista de comentários (planos)
-    Service->>Service: Organiza hierarquia (pai/respostas)
-    Service-->>Controller: List<ComentarioResponseDTO> (árvore)
+    Controller->>Service: listar(idPagina)
+    Service->>Repository: findByIdPaginaAndRemovidoEmIsNull(idPagina)
+    Repository-->>Service: Lista de comentários
+    Service-->>Controller: List<FlipbookComentarioResponseDTO>
     Controller-->>Frontend: 200 OK
-    Frontend-->>Utilizador: Exibe comentários e respostas
+    Frontend-->>Utilizador: Exibe comentários posicionados sobre a imagem
 
-    Utilizador->>Frontend: Escreve texto e clica "Comentar"
-    Frontend->>Controller: POST /api/v1/comentarios { texto, id_pagina }
-    Note over Frontend,Controller: id_pai = null (comentário raiz)
-    Controller->>Service: criarComentario(utilizadorId, dto)
-    Service->>Service: Valida autenticação, define data_efetiv = now()
-    Service->>Repository: save(comentario)
-    Repository-->>Service: Comentário salvo
-    Service-->>Controller: ComentarioResponseDTO
+    Utilizador->>Frontend: Clica num ponto da página e escreve um comentário
+    Frontend->>Controller: POST /api/v1/paginas/{id}/comentarios { texto, x, y }
+    Controller->>Service: criar(idUtilizador, idPagina, dto)
+    Service->>Service: valida autenticação
+    Service->>Repository: save(comentario, likes = 0)
+    Repository-->>Service: Comentário guardado
+    Service-->>Controller: FlipbookComentarioResponseDTO
     Controller-->>Frontend: 201 Created
     Frontend-->>Utilizador: Comentário publicado
 
-    Utilizador->>Frontend: Clica "Responder" num comentário
-    Frontend->>Controller: POST /api/v1/comentarios { texto, id_pagina, id_pai }
-    Note over Frontend,Controller: id_pai = id do comentário original
-    Controller->>Service: criarComentario(utilizadorId, dto)
-    Service->>Repository: findById(id_pai)
-    alt Comentário pai existe e pertence à mesma página
-        Repository-->>Service: Comentário pai encontrado
-        Service->>Service: Define data_efetiv = now()
-        Service->>Repository: save(comentarioFilho)
-        Repository-->>Service: Resposta salva
-        Service-->>Controller: ComentarioResponseDTO (com id_pai)
-        Controller-->>Frontend: 201 Created
-        Frontend-->>Utilizador: Resposta publicada
-    else Comentário pai inválido
-        Service-->>Controller: 422 Unprocessable Entity
-        Controller-->>Frontend: Erro: "Comentário pai inválido"
+    Utilizador->>Frontend: Clica "gostar" num comentário
+    Frontend->>Controller: POST /api/v1/paginas/{id}/comentarios/{idComentario}/like
+    Controller->>Service: registarLike(idUtilizador, idComentario)
+    Service->>Repository: findById(idComentario)
+    alt Comentário existe
+        Service->>Repository: incrementarLikes(idComentario)
+        Repository-->>Service: OK
+        Service-->>Controller: { likes: n+1 }
+        Controller-->>Frontend: 200 OK
+        Frontend-->>Utilizador: Contador de likes actualizado
+    else Comentário não existe
+        Service-->>Controller: 404 Not Found
+        Controller-->>Frontend: Erro
         Frontend-->>Utilizador: Mensagem de erro
     end
 
     Utilizador->>Frontend: Edita texto de um comentário seu
-    Frontend->>Controller: PUT /api/v1/comentarios/{id} { texto }
-    Controller->>Service: editarComentario(utilizadorId, id, novoTexto)
-    Service->>Repository: findById(id)
+    Frontend->>Controller: PUT /api/v1/paginas/{id}/comentarios/{idComentario} { texto }
+    Controller->>Service: editar(idUtilizador, idComentario, novoTexto)
+    Service->>Repository: findById(idComentario)
     alt Comentário existe e pertence ao utilizador
-        Service->>Repository: update(texto, updatedAt)
+        Service->>Repository: update(texto, atualizado_em)
         Repository-->>Service: OK
-        Service-->>Controller: ComentarioResponseDTO actualizado
+        Service-->>Controller: FlipbookComentarioResponseDTO actualizado
         Controller-->>Frontend: 200 OK
-        Frontend-->>Utilizador: Comentário actualizado
     else Sem permissão
         Service-->>Controller: 403 Forbidden
         Controller-->>Frontend: "Não autorizado"
-        Frontend-->>Utilizador: Erro de permissão
     end
 
     Utilizador->>Frontend: Elimina um comentário seu
-    Frontend->>Controller: DELETE /api/v1/comentarios/{id}
-    Controller->>Service: eliminarComentario(utilizadorId, id)
-    Service->>Repository: findById(id)
+    Frontend->>Controller: DELETE /api/v1/paginas/{id}/comentarios/{idComentario}
+    Controller->>Service: eliminar(idUtilizador, idComentario)
+    Service->>Repository: findById(idComentario)
     alt Comentário existe e pertence ao utilizador (ou admin)
-        Service->>Repository: softDelete(id) (deletedAt = now())
+        Service->>Repository: softDelete(idComentario) (removido_em = now())
         Repository-->>Service: OK
         Service-->>Controller: 204 No Content
         Controller-->>Frontend: 204
-        Frontend-->>Utilizador: Comentário removido (apenas oculto)
     else Sem permissão
         Service-->>Controller: 403 Forbidden
         Controller-->>Frontend: "Não autorizado"
-        Frontend-->>Utilizador: Erro
     end
+```
+
+## Nota sobre likes duplicados
+
+Este diagrama assume, para simplicidade, um incremento directo em `likes`. Como referido em [`comments-endpoints.md`](../05-api/comments-endpoints.md), impedir que o mesmo utilizador dê like duas vezes requer uma tabela de junção adicional (`flipbook_comentario_like`) — não estava no MER decidido em reunião, fica como proposta a confirmar.

@@ -1,6 +1,6 @@
-# Diagrama de Casos de Uso
+# Diagrama de Casos de Uso — v3
 
-O diagrama abaixo organiza as funcionalidades do sistema por tipo de actor. O **Leitor** é um utilizador autenticado com `role = LEITOR`; o **Administrador** é um utilizador com `role = ADMIN`. O visitante não autenticado tem acesso apenas a registo, login e pré-visualização.
+> Ver [`00-changelog-v3.md`](../00-changelog-v3.md). Actualizado para o modelo de comentário único (sem resposta), pagamento via GPO, favoritos e atribuição de editores.
 
 ```mermaid
 flowchart TD
@@ -13,22 +13,23 @@ flowchart TD
     subgraph Casos de Uso
         UC1["Registar-se no sistema"]
         UC2["Fazer login"]
-        UC3["Visualizar pré-visualização da revista"]
-        UC4["Comprar revista"]
-        UC5["Enviar comprovativo de pagamento"]
-        UC6["Visualizar revista completa"]
-        UC7["Criar comentário"]
-        UC8["Responder a comentário"]
-        UC9["Editar/eliminar próprio comentário"]
+        UC3["Visualizar amostra da edição (capa / edição gratuita)"]
+        UC4["Comprar edição via Multicaixa Express"]
+        UC5["Visualizar edição completa"]
+        UC6["Comentar numa página do flipbook"]
+        UC7["Dar like num comentário"]
+        UC8["Editar/eliminar próprio comentário"]
+        UC9["Marcar/desmarcar edição como favorita"]
         UC10["Ver histórico de compras"]
         UC11["Gerir perfil"]
-        UC12["Publicar nova revista"]
-        UC13["Editar metadados de revista"]
-        UC14["Eliminar revista (soft delete)"]
-        UC15["Listar pagamentos pendentes"]
-        UC16["Aprovar/rejeitar pagamento"]
-        UC17["Moderar comentários (eliminar qualquer um)"]
-        UC18["Visualizar estatísticas básicas"]
+        UC12["Publicar nova revista/edição"]
+        UC13["Editar metadados de edição"]
+        UC14["Eliminar edição (soft delete)"]
+        UC15["Fazer upload do PDF e gerar flipbook"]
+        UC16["Atribuir utilizador como editor de uma edição"]
+        UC17["Acompanhar pagamentos"]
+        UC18["Moderar comentários (eliminar qualquer um)"]
+        UC19["Consultar logs de actividade"]
     end
 
     V --> UC1
@@ -51,6 +52,8 @@ flowchart TD
     A --> UC16
     A --> UC17
     A --> UC18
+    A --> UC19
 
-    UC4 -.->|"include (após pagamento aprovado)"| UC6
-    UC5 -.->|"extend (aciona validação manual)"| UC16
+    UC4 -.->|"include (após status = PAGO)"| UC5
+    UC12 -.->|"include"| UC15
+```
