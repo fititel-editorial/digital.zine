@@ -1,4 +1,4 @@
-# Endpoints de Autenticação
+# Endpoints de Autenticação — v3.1 (API final em inglês)
 
 **Prefix:** `/api/v1/auth`
 
@@ -9,36 +9,65 @@
 | POST | `/register` | Regista novo utilizador (role `LEITOR`) |
 | POST | `/login` | Autentica e devolve token JWT |
 | POST | `/refresh` | Renova token (requer token actual válido) |
-| POST | `/logout` | (Opcional) descarta token no cliente |
 
 ### `POST /register`
 **Request:**
 ```json
 {
-  "pNome": "João", "sbNome": "Silva", "email": "joao@email.com",
-  "genero": "MASCULINO", "palavraPasse": "Segura123!", "dataNasc": "1990-05-15"
+  "firstName": "João",
+  "lastName": "Silva",
+  "email": "joao@email.com",
+  "password": "Segura123!",
+  "dateOfBirth": "1990-05-15"
 }
 ```
-**Response (201):** dados do utilizador (sem password).  
-**Erros:** `400` (validação), `422` (email já existe).
+**Response (201):**
+```json
+{
+  "token": "eyJ...",
+  "tokenType": "Bearer",
+  "expiresIn": 3600,
+  "user": {
+    "id": 1,
+    "firstName": "João",
+    "lastName": "Silva",
+    "email": "joao@email.com",
+    "role": "LEITOR",
+    "createdAt": "2026-07-13T10:00:00Z"
+  }
+}
+```
+**Erros:** `400` (validação, password fraca), `409` (email já existe).
+
+> **Nota:** o campo `genero` presente em versões anteriores foi removido — não existe no MER.
 
 ### `POST /login`
-**Request:** `{ "email": "joao@email.com", "palavraPasse": "Segura123!" }`  
+**Request:** `{ "email": "joao@email.com", "password": "Segura123!" }`
 **Response (200):**
 ```json
-{ "token": "eyJ...", "tipo": "Bearer", "expiracaoSegundos": 3600, "utilizador": { "id", "pNome", "email", "role" } }
+{
+  "token": "eyJ...",
+  "tokenType": "Bearer",
+  "expiresIn": 3600,
+  "user": {
+    "id": 1,
+    "firstName": "João",
+    "lastName": "Silva",
+    "email": "joao@email.com",
+    "role": "ADMIN",
+    "editorOf": [24, 23]
+  }
+}
 ```
-**Erros:** `401` (credenciais inválidas).
+`editorOf` — IDs das edições a que o utilizador está atribuído via `editor_edicao`. Array vazio quando não há atribuições. O frontend usa-o para adaptar o painel administrativo.
+
+**Erros:** `401` (credenciais inválidas ou conta removida logicamente).
 
 ### `POST /refresh`
-**Header:** `Authorization: Bearer <token>`  
-**Response (200):** `{ "token": "novo...", "tipo": "Bearer", "expiracaoSegundos": 3600 }`  
+**Header:** `Authorization: Bearer <token>`
+**Response (200):** `{ "token": "novo...", "tokenType": "Bearer", "expiresIn": 3600 }`
 **Erros:** `401` (token inválido ou expirado).
-
-### `POST /logout`
-**Header:** `Authorization: Bearer <token>`  
-**Response:** `204 No Content` (sempre).
 
 ---
 
-**Notas:** Palavras-passe com BCrypt. Token JWT com `id`, `email`, `role`, `exp`.
+**Notas:** Palavras-passe com BCrypt. Token JWT com `id`, `email`, `role`, `exp`. O antigo `POST /logout` foi removido da especificação — sendo a API stateless, o descarte do token é responsabilidade do cliente.

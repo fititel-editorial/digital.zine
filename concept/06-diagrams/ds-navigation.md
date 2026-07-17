@@ -12,14 +12,14 @@ sequenceDiagram
     participant Storage as Object Storage (Supabase/R2)
 
     Leitor->>Frontend: Abre a edição 24
-    Frontend->>Backend: GET /edicoes/24
+    Frontend->>Backend: GET /editions/24
     Backend-->>Frontend: metadados da edição
-    Frontend->>Backend: GET /edicoes/24/paginas
+    Frontend->>Backend: GET /editions/24/flipbook
     Backend-->>Frontend: lista de páginas (sem URL)
     Frontend-->>Leitor: renderiza índice / capa
 
     Leitor->>Frontend: Folheia para a página 2
-    Frontend->>Backend: GET /edicoes/24/paginas/2/imagem (Bearer token, se não gratuita)
+    Frontend->>Backend: GET /editions/24/pages/2/image (Bearer token, se não gratuita)
     Backend->>Backend: verifica capa/gratuita ou Pagamento status=PAGO
     Backend->>Storage: lê o objecto WebP
     Storage-->>Backend: imagem
@@ -27,7 +27,7 @@ sequenceDiagram
     Frontend-->>Leitor: exibe página 2
 
     Note over Frontend,Storage: Pré-carregamento da página seguinte, em paralelo
-    Frontend->>Backend: GET /edicoes/24/paginas/3/imagem (antecipado)
+    Frontend->>Backend: GET /editions/24/pages/3/image (antecipado)
     Backend->>Storage: lê o objecto WebP
     Storage-->>Backend: imagem
     Backend-->>Frontend: imagem (já em cache no cliente)
@@ -49,15 +49,15 @@ sequenceDiagram
     participant Storage as Object Storage
 
     Admin->>Frontend: Faz upload do PDF
-    Frontend->>Backend: POST /edicoes/24/flipbook (multipart)
+    Frontend->>Backend: POST /editions/24/flipbook (multipart)
     Backend-->>Frontend: 202 Accepted, estado=PROCESSANDO
 
     Note over Backend,Storage: Processamento assíncrono — split + conversão WebP
     Backend->>Storage: grava cada página
     Storage-->>Backend: OK
 
-    Frontend->>Backend: GET /edicoes/24 (polling)
-    Backend-->>Frontend: estadoProcessamento=PRONTO
+    Frontend->>Backend: GET /editions/24 (polling)
+    Backend-->>Frontend: processingState=PRONTO
     Frontend-->>Admin: edição publicada
 ```
 

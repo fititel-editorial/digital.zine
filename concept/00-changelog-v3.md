@@ -1,5 +1,23 @@
 # Changelog da Documentação — Arquitectura Final (v3)
 
+## Actualização v3.1 — Especificação final da API em inglês (2026-07-18)
+
+Com a especificação final da API (contrato acordado entre backend e frontend, com o MER do backend como fonte de verdade), a documentação foi alinhada:
+
+- **API em inglês:** recursos, endpoints e campos JSON passam para inglês (`/editions`, `/payments`, `firstName`, `releaseDate`, ...). Ficheiros de `05-api/` reescritos.
+- **MER em inglês:** entidades e atributos do `03-data-model/erm.md` passam para inglês (`User`, `Edition`, `firstName`, ...), alinhados com as classes Java. Os nomes físicos de tabelas/colunas mantêm-se em português (dicionário de dados inalterado), mapeados via `@Column`.
+- **Valores de enum mantêm-se em português** (`LEITOR/ADMIN`, `PENDENTE/PROCESSANDO/PAGO/REJEITADO/EXPIRADO`, `MCX_EXPRESS/REFERENCIA`, `CAPA/CONTEUDO`, acções de log `criou/editou/removeu`) — são dados de domínio, não identificadores.
+- **Novidades da especificação final:**
+  - Resposta de login inclui `editorOf` (IDs de edições atribuídas via `editor_edicao`) — permite ao frontend adaptar o painel sem um terceiro role.
+  - Novo endpoint `POST /payments/check-access` — verificação de acesso a uma edição (substitui o mock `hasPurchased()` do frontend).
+  - Nova entidade proposta `CommentLike` (`flipbook_comentario_like`) para unicidade de likes — migração `V2__comment_likes.sql`, a confirmar.
+  - Novos endpoints admin: `GET/POST/PUT/DELETE /admin/editors` (gestão de utilizadores ADMIN) e `GET /admin/readers`, `GET /admin/readers/{id}` (consulta de leitores com actividade).
+  - Removidos da especificação: `POST /auth/logout` (API stateless) e o campo `genero` no registo (não existe no MER).
+  - Paginação padronizada no envelope do Spring (`content`, `totalElements`, `totalPages`, `number`, `size`) com `?page=0&size=20&sort=...`.
+- **Ajustes exigidos ao frontend** (o frontend adapta-se ao backend, nunca o contrário): renomeações de campos (`title→theme`, `vol→number`, `isFree→free`, ...), `price` em cêntimos, fluxo de compra via gateway com polling, amostra por tipo de página (`CAPA`) em vez de contagem fixa, e remoção dos campos sem correspondência no MER (`status` published/draft, `language`, `priceNote`, `technicalDetails`, `technicalMd`, `relatedEditions`). Dashboard/relatórios ficam fora da v3 (melhorias futuras).
+
+---
+
 Esta versão substitui por completo a proposta anterior. O modelo de dados aqui descrito foi **decidido em reunião conjunta com o colega do frontend** e é a fonte de verdade a partir de agora — inclusive onde contradiz análises anteriores feitas só do lado do backend.
 
 > **Correcção pós-reunião:** uma primeira versão deste changelog registou, por engano, "código também em português" — a decisão real da equipa é **documentação em português, código-fonte em inglês** (ver decisão 17 em [`04-architecture/technical-decisions.md`](./04-architecture/technical-decisions.md)). Os pontos abaixo já reflectem a correcção. O boilerplate de backend gerado inicialmente foi também removido, por não cumprir a arquitectura em camadas — será refeito de raiz seguindo [`08-implementation-guides/crud-implementation-guide.md`](./08-implementation-guides/crud-implementation-guide.md).

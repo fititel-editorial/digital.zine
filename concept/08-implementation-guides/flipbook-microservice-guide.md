@@ -24,7 +24,7 @@ A partir de um PDF enviado pelo admin, gerar uma imagem WebP por página, guard�
 
 ```
 EdicaoController
-      │  POST /edicoes/{id}/flipbook (multipart: pdf)
+      │  POST /editions/{id}/flipbook (multipart: pdf)
       ▼
 FlipbookProcessingService (@Async)
       │
