@@ -5,19 +5,19 @@ const EDITIONS = [
   {
     id: 2,
     vol: 2,
-    title: "Dados que Contam Histórias",
+    title: "Cibersegurança e Confiança na Era da Inteligência Artificial",
     date: "Setembro 2026",
     excerpt:
-      "Como a análise massiva de dados está ditando as novas tendências tecnológicas em Angola. Da predição climática ao planeamento urbano inteligente.",
+      "Os desafios e as soluções para proteger dados, sistemas e relações digitais num mundo cada vez mais mediado por inteligência artificial.",
     cover: "/images/revista-2025.png",
   },
   {
     id: 1,
     vol: 1,
-    title: "Design e Criatividade Artificial",
+    title: "40 Anos de Inovação",
     date: "Setembro 2025",
     excerpt:
-      "Estúdios africanos pioneiros na incorporação de ferramentas de IA no seu fluxo de trabalho criativo.",
+      "Edição comemorativa dos 40 anos do ITEL — uma viagem pela história do ensino técnico e da inovação em telecomunicações em Angola.",
     cover: "/images/revista-2025.png",
   },
 ];

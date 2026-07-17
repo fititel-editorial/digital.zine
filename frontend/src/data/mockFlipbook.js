@@ -1,7 +1,51 @@
 export const MOCK_FLIPBOOK_DATA = {
+  1: {
+    vol: 1,
+    title: "40 Anos de Inovação",
+    pages: [
+      { id: 1, type: "cover", image: "/images/revista-2025.png", num: null },
+      {
+        id: 2,
+        type: "content",
+        image: "https://placehold.co/800x1131/FFFFFF/333333?text=P%C3%A1gina+2",
+        num: 2,
+      },
+      {
+        id: 3,
+        type: "content",
+        image: "https://placehold.co/800x1131/FFFFFF/333333?text=P%C3%A1gina+3",
+        num: 3,
+      },
+      {
+        id: 4,
+        type: "content",
+        image: "https://placehold.co/800x1131/FFFFFF/333333?text=P%C3%A1gina+4",
+        num: 4,
+      },
+      {
+        id: 5,
+        type: "content",
+        image: "https://placehold.co/800x1131/FFFFFF/333333?text=P%C3%A1gina+5",
+        num: 5,
+      },
+      {
+        id: 6,
+        type: "content",
+        image: "https://placehold.co/800x1131/FFFFFF/333333?text=P%C3%A1gina+6",
+        num: 6,
+      },
+      {
+        id: 7,
+        type: "content",
+        image: "https://placehold.co/800x1131/FFFFFF/333333?text=P%C3%A1gina+7",
+        num: 7,
+      },
+    ],
+    comments: [],
+  },
   2: {
     vol: 2,
-    title: "Design e Criatividade Artificial",
+    title: "Cibersegurança e Confiança na Era da Inteligência Artificial",
     pages: [
       { id: 1, type: "cover", image: "/images/revista-2025.png", num: null },
       {

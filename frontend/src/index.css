@@ -1422,33 +1422,56 @@ button {
 }
 
 /* --- Technical Details --- */
-.ed-tech-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
-}
-
-.ed-tech-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: var(--space-4);
-  background: var(--bg-secondary);
-  border: var(--border-width) solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-
-.ed-tech-item__key {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  color: var(--text-tertiary);
-}
-
-.ed-tech-item__value {
+.ed-tech-md {
   font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.ed-tech-md h2,
+.ed-tech-md h3,
+.ed-tech-md h4 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-3);
+}
+
+.ed-tech-md h2 { font-size: 1.1rem; }
+.ed-tech-md h3 { font-size: 1rem; }
+.ed-tech-md h4 { font-size: 0.95rem; }
+
+.ed-tech-md p {
+  margin-bottom: var(--space-2);
+}
+
+.ed-tech-md hr {
+  border: none;
+  border-top: var(--border-width) solid var(--border-color);
+  margin: var(--space-5) 0;
+}
+
+.ed-tech-md strong {
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.ed-tech-md ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: var(--space-3);
+}
+
+.ed-tech-md ul li {
+  padding: var(--space-1) 0;
+  color: var(--text-secondary);
+}
+
+.ed-tech-md ul li::before {
+  content: "—";
+  color: var(--text-tertiary);
+  margin-right: var(--space-2);
 }
 
 /* --- Sidebar --- */

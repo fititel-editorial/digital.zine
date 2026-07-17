@@ -1,19 +1,57 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { addPurchase, hasPurchased } from "../data/mockPurchases";
 import { toggleFavorite, isFavorited } from "../data/mockFavorites";
 
+const renderMarkdown = (md) => {
+  if (!md) return ""
+  let html = md
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+  const lines = html.split("\n")
+  const out = []
+  let inList = false
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    if (/^### (.+)/.test(line)) {
+      if (inList) { out.push("</ul>"); inList = false }
+      out.push(`<h4>${line.replace(/^### /, "")}</h4>`)
+    } else if (/^## (.+)/.test(line)) {
+      if (inList) { out.push("</ul>"); inList = false }
+      out.push(`<h3>${line.replace(/^## /, "")}</h3>`)
+    } else if (/^# (.+)/.test(line)) {
+      if (inList) { out.push("</ul>"); inList = false }
+      out.push(`<h2>${line.replace(/^# /, "")}</h2>`)
+    } else if (/^-{3,}$/.test(line)) {
+      if (inList) { out.push("</ul>"); inList = false }
+      out.push("<hr>")
+    } else if (/^[-*] (.+)/.test(line)) {
+      if (!inList) { out.push("<ul>"); inList = true }
+      out.push(`<li>${line.replace(/^[-*] /, "")}</li>`)
+    } else if (/^\s*$/.test(line)) {
+      if (inList) { out.push("</ul>"); inList = false }
+    } else {
+      if (inList) { out.push("</ul>"); inList = false }
+      const processed = line.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      out.push(`<p>${processed}</p>`)
+    }
+  }
+  if (inList) out.push("</ul>")
+  return out.join("\n")
+}
+
 const EDITIONS_DATA = {
   1: {
     vol: 1,
-    title: "Dados que Contam Histórias",
-    subtitle: "Inovação, Talento e Futuro Digital em Angola",
+    title: "40 Anos de Inovação",
+    subtitle: "Edição Comemorativa — 40 Anos do ITEL",
     description:
-      "Histórias, entrevistas e análises sobre o ecossistema de tecnologia, criatividade e negócios que está a redefinir o país.",
+      "Uma edição especial que celebra quatro décadas do Instituto de Telecomunicações (ITEL) na formação de talentos e na inovação tecnológica em Angola.",
     cover: "/images/revista-2025.png",
-    date: "Maio 2026",
-    dateIso: "2026-05-12",
+    date: "Setembro 2025",
+    dateIso: "2025-09-15",
     editor: "Ana Pereira",
     language: "Português",
     pages: 120,
@@ -21,33 +59,33 @@ const EDITIONS_DATA = {
     priceNote:
       "Acesso imediato à edição completa. Também disponível para assinantes.",
     isFree: true,
-    tags: ["Tecnologia", "Negócios", "Casos Reais", "Edição Especial"],
+    tags: ["ITEL", "Educação", "Inovação", "Edição Especial"],
     overview:
-      "Esta edição da FITITEL mergulha profundamente no cenário de inovação em Angola: das startups em crescimento explosivo às grandes empresas que viram o mundo com tecnologia, talento local e transformação digital. Entrevistas exclusivas, laboratórios de produto, análise de dados e tendências globais adaptadas à realidade angolana.",
+      "O ITEL completa 40 anos de história na formação de profissionais e no desenvolvimento das telecomunicações em Angola. Esta edição especial da FITITEL percorre a trajetória da instituição, desde a sua fundação até aos dias de hoje, destacando marcos, personalidades e o impacto dos seus alumni no setor tecnológico angolano. Uma homenagem à excelência no ensino técnico e à inovação que moldou o futuro digital do país.",
     articles: [
       {
-        title: "Mapeando o ecossistema de startups em Luanda",
-        desc: "Um panorama atualizado dos hubs de inovação e programas de aceleração",
+        title: "A história do ITEL: quatro décadas de ensino técnico",
+        desc: "Da fundação aos dias de hoje, os marcos que definiram a instituição",
         page: 12,
       },
       {
-        title: "Entrevista: Como formar talentos para o futuro digital",
-        desc: "Líderes educacionais partilham estratégias para desenvolver competências tecnológicas",
+        title: "Entrevista: O legado dos diretores do ITEL",
+        desc: "Antigos e atuais líderes partilham memórias e visões para o futuro",
         page: 32,
       },
       {
-        title: "Inteligência Artificial aplicada a serviços públicos",
-        desc: "Casos práticos de soluções digitais que melhoram o dia a dia das pessoas",
+        title: "Alumni em destaque: onde estão os formados do ITEL",
+        desc: "Profissionais que marcam presença nos maiores projetos de tecnologia em Angola",
         page: 56,
       },
       {
-        title: "Design de produto com identidade africana",
-        desc: "Projetos que combinam cultura local com linguagem visual contemporânea",
+        title: "Inovação e investigação: o ITEL como polo tecnológico",
+        desc: "Laboratórios, parcerias e projetos que posicionam o instituto na vanguarda",
         page: 78,
       },
       {
-        title: "Open Data e transparência governamental",
-        desc: "Como os dados abertos estão a transformar a relação entre cidadão e estado",
+        title: "O futuro do ensino das telecomunicações em Angola",
+        desc: "Desafios e oportunidades para a próxima década",
         page: 94,
       },
     ],
@@ -57,47 +95,81 @@ const EDITIONS_DATA = {
       dimensions: "210 x 297 mm (A4)",
       publisher: "FITITEL Publishing, Luanda",
     },
+    technicalMd: `**ISBN:** 978-3-16-148410-0
+**Formato:** Digital (PDF/EPUB) + Flipbook
+**Dimensoes:** 210 x 297 mm (A4)
+**Editora:** FITITEL Publishing, Luanda
+
+---
+
+## Direccao
+
+**Director Geral:** Eng. Claudio Goncalves
+**Delfina Silva** — Professora
+**Euclides Costa** — Professor
+
+## Equipa
+
+**Adolfo Figueiredo** — Estudante
+**Erasmo Veloso** — Estudante
+**Evandro Gomes** — Estudante
+**Marcilio Domingos** — Estudante
+**Neil Dias** — Estudante
+**Ricardo Silva** — Estudante
+**Rildo Francisco** — Estudante
+**Isabel Solendo** — Estudante
+**Luis Goncalves** — Estudante
+**Maria Tchisseque** — Estudante
+
+## Revisao Linguistica e Editorial
+
+**Jose da Conceicao**
+**Humilde Irineu**
+
+**Publicacao Anual**
+
+**Editoracao e Publicacao:** Instituto de Telecomunicacoes - ITEL`,
     relatedEditions: [23, 22],
   },
   2: {
     vol: 2,
-    title: "Design e Criatividade Artificial",
-    subtitle: "A fusão entre arte humana e inteligência generativa",
+    title: "Cibersegurança e Confiança na Era da Inteligência Artificial",
+    subtitle: "Protegendo o futuro digital com inteligência e responsabilidade",
     description:
-      "Entrevistas e análises sobre estúdios africanos que lideram a adopção de IA na criação artística e no design de produto.",
+      "Os desafios e as soluções para proteger dados, sistemas e relações digitais num mundo cada vez mais mediado por inteligência artificial.",
     cover: "/images/revista-2025.png",
-    date: "Abril 2026",
-    dateIso: "2026-04-18",
+    date: "Setembro 2026",
+    dateIso: "2026-09-15",
     editor: "Carlos Mendes",
     language: "Português",
-    pages: 98,
+    pages: 110,
     price: "AKZ 2.900",
     priceNote:
       "Acesso imediato à edição completa. Também disponível para assinantes.",
     isFree: false,
-    tags: ["Arte", "Design", "IA Generativa"],
+    tags: ["Cibersegurança", "IA", "Confiança Digital"],
     overview:
-      "O impacto do Gen-AI na arte criativa digital. Estúdios africanos pioneiros na incorporação de ferramentas de IA no seu fluxo de trabalho criativo, desde concept art até produção final.",
+      "À medida que a inteligência artificial transforma todos os sectores da sociedade, a cibersegurança torna-se o pilar fundamental para garantir confiança e resiliência digital. Esta edição da FITITEL explora os novos vectores de ameaça potenciados pela IA, as estratégias de defesa mais avançadas e o papel das instituições de ensino na formação de profissionais capazes de enfrentar os desafios da próxima década.",
     articles: [
       {
-        title: "O novo estúdio: ferramentas de IA no workflow criativo",
-        desc: "Como os artistas africanos estão a integrar IA generativa",
+        title: "IA generativa e segurança: a nova fronteira das ameaças digitais",
+        desc: "Deepfakes, ataques automatizados e como se proteger",
         page: 8,
       },
       {
-        title: "Direitos de autor na era da IA",
-        desc: "Análise jurídica do panorama legal em Angola e no continente",
+        title: "Privacidade de dados na era dos modelos de linguagem",
+        desc: "Os riscos e as boas práticas para empresas e utilizadores",
         page: 28,
       },
       {
-        title: 'Entrevista: "A IA não substitui o artista"',
-        desc: "Conversa com o premiado designer angolano João Sousa",
-        page: 44,
+        title: "Entrevista: Como Angola se prepara para o cibercrime com IA",
+        desc: "Especialistas nacionais partilham estratégias de defesa",
+        page: 48,
       },
       {
-        title: "Prompt engineering como competência de design",
-        desc: "Guia prático para designers que querem dominar ferramentas generativas",
-        page: 62,
+        title: "Confiança digital: construindo relaciones seguras num mundo automatizado",
+        desc: "O papel da transparência e da ética na adopção de IA",
+        page: 68,
       },
     ],
     technicalDetails: {
@@ -106,6 +178,40 @@ const EDITIONS_DATA = {
       dimensions: "210 x 297 mm (A4)",
       publisher: "FITITEL Publishing, Luanda",
     },
+    technicalMd: `**ISBN:** 978-3-16-148410-1
+**Formato:** Digital (PDF/EPUB) + Flipbook
+**Dimensoes:** 210 x 297 mm (A4)
+**Editora:** FITITEL Publishing, Luanda
+
+---
+
+## Direccao
+
+**Director Geral:** Eng. Claudio Goncalves
+**Delfina Silva** — Professora
+**Euclides Costa** — Professor
+
+## Equipa
+
+**Adolfo Figueiredo** — Estudante
+**Erasmo Veloso** — Estudante
+**Evandro Gomes** — Estudante
+**Marcilio Domingos** — Estudante
+**Neil Dias** — Estudante
+**Ricardo Silva** — Estudante
+**Rildo Francisco** — Estudante
+**Isabel Solendo** — Estudante
+**Luis Goncalves** — Estudante
+**Maria Tchisseque** — Estudante
+
+## Revisao Linguistica e Editorial
+
+**Jose da Conceicao**
+**Humilde Irineu**
+
+**Publicacao Anual**
+
+**Editoracao e Publicacao:** Instituto de Telecomunicacoes - ITEL`,
     relatedEditions: [24, 22],
   },
   22: {
@@ -150,6 +256,40 @@ const EDITIONS_DATA = {
       dimensions: "210 x 297 mm (A4)",
       publisher: "FITITEL Publishing, Luanda",
     },
+    technicalMd: `**ISBN:** 978-3-16-148410-2
+**Formato:** Digital (PDF/EPUB) + Flipbook
+**Dimensoes:** 210 x 297 mm (A4)
+**Editora:** FITITEL Publishing, Luanda
+
+---
+
+## Direccao
+
+**Director Geral:** Eng. Claudio Goncalves
+**Delfina Silva** — Professora
+**Euclides Costa** — Professor
+
+## Equipa
+
+**Adolfo Figueiredo** — Estudante
+**Erasmo Veloso** — Estudante
+**Evandro Gomes** — Estudante
+**Marcilio Domingos** — Estudante
+**Neil Dias** — Estudante
+**Ricardo Silva** — Estudante
+**Rildo Francisco** — Estudante
+**Isabel Solendo** — Estudante
+**Luis Goncalves** — Estudante
+**Maria Tchisseque** — Estudante
+
+## Revisao Linguistica e Editorial
+
+**Jose da Conceicao**
+**Humilde Irineu**
+
+**Publicacao Anual**
+
+**Editoracao e Publicacao:** Instituto de Telecomunicacoes - ITEL`,
     relatedEditions: [24, 23],
   },
   21: {
@@ -187,6 +327,40 @@ const EDITIONS_DATA = {
       dimensions: "210 x 297 mm (A4)",
       publisher: "FITITEL Publishing, Luanda",
     },
+    technicalMd: `**ISBN:** 978-3-16-148410-3
+**Formato:** Digital (PDF/EPUB) + Flipbook
+**Dimensoes:** 210 x 297 mm (A4)
+**Editora:** FITITEL Publishing, Luanda
+
+---
+
+## Direccao
+
+**Director Geral:** Eng. Claudio Goncalves
+**Delfina Silva** — Professora
+**Euclides Costa** — Professor
+
+## Equipa
+
+**Adolfo Figueiredo** — Estudante
+**Erasmo Veloso** — Estudante
+**Evandro Gomes** — Estudante
+**Marcilio Domingos** — Estudante
+**Neil Dias** — Estudante
+**Ricardo Silva** — Estudante
+**Rildo Francisco** — Estudante
+**Isabel Solendo** — Estudante
+**Luis Goncalves** — Estudante
+**Maria Tchisseque** — Estudante
+
+## Revisao Linguistica e Editorial
+
+**Jose da Conceicao**
+**Humilde Irineu**
+
+**Publicacao Anual**
+
+**Editoracao e Publicacao:** Instituto de Telecomunicacoes - ITEL`,
     relatedEditions: [24, 23],
   },
 };
@@ -521,18 +695,12 @@ const EditionDetails = () => {
             {/* Tab: Technical */}
             {activeTab === "technical" && (
               <div className="ed-tab-panel reveal">
-                <div className="ed-tech-grid">
-                  {Object.entries(edition.technicalDetails).map(
-                    ([key, value]) => (
-                      <div key={key} className="ed-tech-item">
-                        <span className="ed-tech-item__key">
-                          {key.toUpperCase()}
-                        </span>
-                        <span className="ed-tech-item__value">{value}</span>
-                      </div>
-                    ),
-                  )}
-                </div>
+                <div
+                  className="ed-tech-md"
+                  dangerouslySetInnerHTML={{
+                    __html: renderMarkdown(edition.technicalMd),
+                  }}
+                />
               </div>
             )}
           </div>
