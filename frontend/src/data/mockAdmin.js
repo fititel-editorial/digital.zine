@@ -1,5 +1,55 @@
 export const MOCK_EDITIONS = [
   {
+    id: 2,
+    vol: 2,
+    title: "Design e Criatividade Artificial",
+    subtitle: "A fusão entre arte humana e inteligência generativa",
+    description:
+      "Entrevistas e análises sobre estúdios africanos que lideram a adopção de IA na criação artística e no design de produto.",
+    cover: "/images/revista-2025.png",
+    date: "Abril 2026",
+    dateIso: "2026-04-18",
+    editor: "Carlos Mendes",
+    language: "Português",
+    pages: 98,
+    price: "AKZ 2.900",
+    priceNote:
+      "Acesso imediato à edição completa. Também disponível para assinantes.",
+    isFree: false,
+    tags: ["Arte", "Design", "IA Generativa"],
+    overview:
+      "O impacto do Gen-AI na arte criativa digital. Estúdios africanos pioneiros na incorporação de ferramentas de IA no seu fluxo de trabalho criativo, desde concept art até produção final.",
+    articles: [
+      {
+        title: "O novo estúdio: ferramentas de IA no workflow criativo",
+        desc: "Como os artistas africanos estão a integrar IA generativa",
+        page: 8,
+      },
+      {
+        title: "Direitos de autor na era da IA",
+        desc: "Análise jurídica do panorama legal em Angola e no continente",
+        page: 28,
+      },
+      {
+        title: 'Entrevista: "A IA não substitui o artista"',
+        desc: "Conversa com o premiado designer angolano João Sousa",
+        page: 44,
+      },
+      {
+        title: "Prompt engineering como competência de design",
+        desc: "Guia prático para designers que querem dominar ferramentas generativas",
+        page: 62,
+      },
+    ],
+    technicalDetails: {
+      isbn: "978-3-16-148410-1",
+      format: "Digital (PDF/EPUB) + Flipbook",
+      dimensions: "210 x 297 mm (A4)",
+      publisher: "FITITEL Publishing, Luanda",
+    },
+    status: "published",
+  },
+  {
     id: 24,
     vol: 24,
     title: "Dados que Contam Histórias",
