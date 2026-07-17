@@ -30,6 +30,7 @@
   --accent-soft: #DBEAFE;
   --accent-blue-light: #60A5FA;
   --accent-terminal: #10B981; /* Terminal success green */
+  --accent-purple: #7C3AED;   /* Purple accent for hover states */
 
   /* Terminal / System Log Elements */
   --bg-system: #0B1120;
