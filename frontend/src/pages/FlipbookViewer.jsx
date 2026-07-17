@@ -257,25 +257,31 @@ const FlipbookViewer = () => {
           )}
         </div>
 
-        {!hasAccess && !dismissedGate && (
+        {!dismissedGate && (
           <div className="fb-gate">
             <div className="fb-gate__card">
               <span className="fb-gate__badge">PRÉ-VISUALIZAÇÃO</span>
               <h2 className="fb-gate__title">{edition?.title || data.title}</h2>
-              <p className="fb-gate__desc">
-                Está a ver apenas as primeiras páginas. Adquira a edição completa para acesso a todo o conteúdo.
-              </p>
-              {user?.role === 'reader' ? (
+              {hasAccess ? (
+                <p className="fb-gate__desc">
+                  Está a visualizar o flipbook em modo de pré-visualização. Feche esta mensagem para aproveitar a leitura completa.
+                </p>
+              ) : (
+                <p className="fb-gate__desc">
+                  Está a ver apenas as primeiras páginas. Adquira a edição completa para acesso a todo o conteúdo.
+                </p>
+              )}
+              {!hasAccess && user?.role === 'reader' ? (
                 <button className="btn btn--primary fb-gate__btn" onClick={() => { addPurchase(user.readerId, numId); window.location.reload() }}>
                   Comprar — {edition?.price || 'AKZ 2.900'}
                 </button>
-              ) : (
+              ) : !hasAccess ? (
                 <button className="btn btn--primary fb-gate__btn" onClick={() => navigate('/login')}>
                   Entrar para comprar
                 </button>
-              )}
+              ) : null}
               <button className="fb-gate__dismiss" onClick={() => setDismissedGate(true)}>
-                Continuar a pré-visualizar
+                {hasAccess ? 'Começar a ler' : 'Continuar a pré-visualizar'}
               </button>
             </div>
           </div>
