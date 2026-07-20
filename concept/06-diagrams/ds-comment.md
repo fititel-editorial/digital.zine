@@ -11,7 +11,7 @@ sequenceDiagram
     participant Repository as FlipbookComentarioRepository
 
     Utilizador->>Frontend: Abre a página 15 do flipbook
-    Frontend->>Controller: GET /api/v1/paginas/{id}/comentarios
+    Frontend->>Controller: GET /api/v1/pages/{pageId}/comments
     Controller->>Service: listar(idPagina)
     Service->>Repository: findByIdPaginaAndRemovidoEmIsNull(idPagina)
     Repository-->>Service: Lista de comentários
@@ -20,7 +20,7 @@ sequenceDiagram
     Frontend-->>Utilizador: Exibe comentários posicionados sobre a imagem
 
     Utilizador->>Frontend: Clica num ponto da página e escreve um comentário
-    Frontend->>Controller: POST /api/v1/paginas/{id}/comentarios { texto, x, y }
+    Frontend->>Controller: POST /api/v1/pages/{pageId}/comments { text, x, y }
     Controller->>Service: criar(idUtilizador, idPagina, dto)
     Service->>Service: valida autenticação
     Service->>Repository: save(comentario, likes = 0)
@@ -30,7 +30,7 @@ sequenceDiagram
     Frontend-->>Utilizador: Comentário publicado
 
     Utilizador->>Frontend: Clica "gostar" num comentário
-    Frontend->>Controller: POST /api/v1/paginas/{id}/comentarios/{idComentario}/like
+    Frontend->>Controller: POST /api/v1/pages/{pageId}/comments/{commentId}/like
     Controller->>Service: registarLike(idUtilizador, idComentario)
     Service->>Repository: findById(idComentario)
     alt Comentário existe
@@ -46,7 +46,7 @@ sequenceDiagram
     end
 
     Utilizador->>Frontend: Edita texto de um comentário seu
-    Frontend->>Controller: PUT /api/v1/paginas/{id}/comentarios/{idComentario} { texto }
+    Frontend->>Controller: PUT /api/v1/pages/{pageId}/comments/{commentId} { text }
     Controller->>Service: editar(idUtilizador, idComentario, novoTexto)
     Service->>Repository: findById(idComentario)
     alt Comentário existe e pertence ao utilizador
@@ -60,7 +60,7 @@ sequenceDiagram
     end
 
     Utilizador->>Frontend: Elimina um comentário seu
-    Frontend->>Controller: DELETE /api/v1/paginas/{id}/comentarios/{idComentario}
+    Frontend->>Controller: DELETE /api/v1/pages/{pageId}/comments/{commentId}
     Controller->>Service: eliminar(idUtilizador, idComentario)
     Service->>Repository: findById(idComentario)
     alt Comentário existe e pertence ao utilizador (ou admin)

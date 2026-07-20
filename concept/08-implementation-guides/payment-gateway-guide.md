@@ -39,12 +39,12 @@ public class SimuladoGatewayPagamentoService implements GatewayPagamentoService 
 
     @Override
     public ResultadoNotificacao interpretarNotificacao(String payload, Map<String, String> headers) {
-        throw new UnsupportedOperationException("Usar POST /dev/pagamentos/{id}/simular em vez de webhook real");
+        throw new UnsupportedOperationException("Usar POST /dev/payments/{id}/simulate em vez de webhook real");
     }
 }
 ```
 
-O endpoint `POST /dev/pagamentos/{id}/simular` (só activo em `dev`) chama directamente `PagamentoService.confirmar(id, estado)`, sem passar por `interpretarNotificacao` — porque não há notificação real a interpretar.
+O endpoint `POST /dev/payments/{id}/simulate` (só activo em `dev`) chama directamente `PaymentService.confirm(id, result)`, sem passar por `interpretarNotificacao` — porque não há notificação real a interpretar.
 
 ## Implementação real (a desenvolver após certificação)
 

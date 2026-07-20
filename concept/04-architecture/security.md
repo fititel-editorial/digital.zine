@@ -53,12 +53,12 @@ PROCESSANDO ──(sem confirmação dentro do prazo)──► EXPIRADO
 
 ### Fluxo completo (visão de alto nível)
 
-1. O leitor escolhe a edição e o método (`MCX_EXPRESS` ou `REFERENCIA`) → `POST /pagamentos`.
+1. O leitor escolhe a edição e o método (`MCX_EXPRESS` ou `REFERENCIA`) → `POST /payments`.
 2. O backend chama a API do GPO para iniciar a transacção (Express: pede confirmação por telemóvel; Referência: pede geração de Entidade/Referência/Valor). Estado: `PROCESSANDO`.
 3. O leitor conclui o pagamento fora da aplicação (na app MCX Express, ou num ATM/homebanking).
 4. O GPO notifica o backend de forma assíncrona (o mecanismo exacto de notificação — webhook HTTP, polling periódico, ou outro — depende da forma de integração escolhida junto do banco de apoio; ver [`08-implementation-guides/payment-gateway-guide.md`](../08-implementation-guides/payment-gateway-guide.md)).
 5. O backend actualiza `pagamento.status`, `referencia_externa` e `data_pagamento`, e liberta o acesso à edição.
-6. O cliente faz *polling* a `GET /pagamentos/{id}` até ver o estado mudar.
+6. O cliente faz *polling* a `GET /payments/{id}` até ver o estado mudar.
 
 ### Ambiente de desenvolvimento (antes do acesso oficial à EMIS)
 

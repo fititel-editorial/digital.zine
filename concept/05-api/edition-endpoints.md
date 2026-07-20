@@ -1,8 +1,8 @@
-# Endpoints de Revista e Edição — v3
+# Endpoints de Revista e Edição — v3.1 (API final em inglês)
 
-> Ver [`00-changelog-v3.md`](../00-changelog-v3.md). Substitui `magazine-endpoints.md`. `Revista` é agora o título/marca; `Edicao` é a unidade vendável — ver [`03-data-model/erm.md`](../03-data-model/erm.md).
+> `Magazine` (`revista`) é o título/marca; `Edition` (`edicao`) é a unidade vendável — ver [`03-data-model/erm.md`](../03-data-model/erm.md).
 
-## Revista — `/api/v1/revistas`
+## Magazine — `/api/v1/magazines`
 
 | Método | Endpoint | Descrição |
 |--------|----------|-------------|
@@ -15,12 +15,22 @@
 ### `GET /{id}`
 **Response (200):**
 ```json
-{ "id": 1, "nome": "FITITEL", "edicoes": [ { "id": 24, "numero": 24, "tema": "Dados que Contam Histórias" } ] }
+{
+  "id": 1,
+  "name": "FITITEL",
+  "editions": [
+    { "id": 24, "number": 24, "theme": "Dados que Contam Histórias" }
+  ]
+}
 ```
+
+### `POST /`
+**Request:** `{ "name": "FITITEL" }`
+**Response (201):** revista criada.
 
 ---
 
-## Edição — `/api/v1/edicoes`
+## Edition — `/api/v1/editions`
 
 ### Públicos (sem token)
 
@@ -28,50 +38,94 @@
 |--------|----------|-------------|
 | GET | `/` | Lista edições (metadados) |
 | GET | `/{id}` | Detalhe de uma edição |
-| GET | `/{id}/artigos` | Lista de artigos da edição (índice) |
+| GET | `/{id}/articles` | Lista de artigos da edição (índice) |
 | GET | `/{id}/tags` | Etiquetas da edição |
-| GET | `/{id}/paginas` | Metadados das páginas do flipbook |
+| GET | `/{id}/flipbook` | Metadados do flipbook + lista de páginas |
 
 #### `GET /`
-**Query params:** `idRevista`, `ano`, `tag`, `gratis`, `pagina`, `tamanho`, `ordenar`
-**Response (200):** lista paginada com `id, tema, lema, numero, dataLancamento, preco, eGratis, paginas, urlCapa`.
+**Query params:** `magazineId`, `year`, `tag`, `free`, `page`, `size`, `sort`
+**Response (200):** lista paginada:
+```json
+{
+  "content": [
+    {
+      "id": 24,
+      "theme": "Dados que Contam Histórias",
+      "tagline": "Inovação, Talento e Futuro Digital em Angola",
+      "description": "Histórias, entrevistas e análises...",
+      "price": 290000,
+      "pageCount": 120,
+      "number": 24,
+      "releaseDate": "2026-05-01",
+      "free": true,
+      "coverUrl": "/api/v1/editions/24/pages/1/image",
+      "tags": ["Tecnologia", "Negócios"],
+      "processingState": "PRONTO",
+      "magazineId": 1,
+      "magazineName": "FITITEL"
+    }
+  ],
+  "totalElements": 42, "totalPages": 3, "number": 0, "size": 20
+}
+```
+`price` em **cêntimos** (kwanza): `290000` = AKZ 2.900,00 — o frontend formata. `coverUrl` aponta para o endpoint da imagem da página `CAPA`; `null` se o flipbook ainda não foi enviado.
 
 #### `GET /{id}`
-**Response (200):** detalhe completo + `estadoProcessamento` (herdado de `flipbook_edicao`).
+**Response (200):** detalhe completo — mesma forma da listagem, mais:
+```json
+{
+  "articles": [
+    { "id": 1, "title": "Mapeando o ecossistema de startups em Luanda", "description": "...", "page": 12, "order": 1 }
+  ],
+  "editors": [
+    { "userId": 7, "firstName": "Ana", "lastName": "Pereira" }
+  ],
+  "createdAt": "2026-04-20T09:00:00Z"
+}
+```
+`editors` vem da associação `editor_edicao`; `articles` é embutido para evitar chamada extra.
 **Erros:** `404`
 
-#### `GET /{id}/artigos`
+#### `GET /{id}/articles`
 **Response (200):**
 ```json
-{ "data": [ { "id": 1, "titulo": "IA aplicada à agricultura", "descricao": "...", "page": 12, "ordem": 1 } ] }
+[
+  { "id": 1, "title": "IA aplicada à agricultura", "description": "...", "page": 12, "order": 1 }
+]
 ```
 
 #### `GET /{id}/tags`
 **Response (200):** `{ "tags": ["dados", "inteligência artificial"] }`
 
-#### `GET /{id}/paginas`
+#### `GET /{id}/flipbook`
 **Response (200):**
 ```json
 {
-  "idEdicao": 24,
-  "estadoProcessamento": "PRONTO",
-  "totalPaginas": 120,
-  "paginas": [
-    { "ordem": 1, "tipo": "CAPA" },
-    { "ordem": 2, "tipo": "CONTEUDO" }
+  "editionId": 24,
+  "processingState": "PRONTO",
+  "generatedAt": "2026-05-01T12:00:00Z",
+  "totalPages": 120,
+  "pages": [
+    { "order": 1, "type": "CAPA" },
+    { "order": 2, "type": "CONTEUDO" }
   ]
 }
 ```
-Não devolve `urlImagem` directamente — ver secção seguinte.
-**Erros:** `404`, `409` (`estadoProcessamento != PRONTO`)
+Não devolve URLs de imagem — o frontend constrói o path do endpoint a partir de `order` (ver secção seguinte). Isto evita a fuga de URLs de conteúdo pago.
+**Erros:** `404` (flipbook não enviado)
 
-### Condicional (público para páginas de capa/edições gratuitas, autenticado para as restantes)
+### Condicional (público para capa/edições gratuitas, autenticado para as restantes)
 
 | Método | Endpoint | Descrição |
 |--------|----------|-------------|
-| GET | `/{id}/paginas/{ordem}/imagem` | Devolve a imagem WebP da página |
+| GET | `/{id}/pages/{order}/image` | Devolve a imagem WebP da página |
 
-**Header:** `Authorization: Bearer <token>` — obrigatório salvo quando `edicao.e_gratis = true` ou a página é a capa.
+**Regras de acesso:**
+- Edição gratuita (`free = true`): todas as páginas acessíveis sem token.
+- Edição paga, página `CAPA`: acessível sem token (amostra).
+- Edição paga, página `CONTEUDO`: requer token + pagamento com `status = PAGO` para a edição.
+- `ADMIN`: acesso total.
+
 **Response (200):** binário (`Content-Type: image/webp`).
 **Erros:** `401`, `403` (sem pagamento `PAGO` para a edição), `404`
 
@@ -79,36 +133,51 @@ Não devolve `urlImagem` directamente — ver secção seguinte.
 
 | Método | Endpoint | Descrição |
 |--------|----------|-------------|
-| POST | `/` | Cria edição (JSON de metadados) e dispara o upload do PDF em separado |
+| POST | `/` | Cria edição (JSON de metadados); o upload do PDF é feito em separado |
 | PUT | `/{id}` | Actualiza metadados |
 | DELETE | `/{id}` | Soft delete |
 | POST | `/{id}/flipbook` | Upload do PDF; dispara split + conversão para WebP (assíncrono) |
-| PATCH | `/{id}/paginas/{ordem}` | Ajusta uma página (ex.: alterna `tipo` entre `CAPA`/`CONTEUDO`) |
-| POST | `/{id}/artigos` | Adiciona artigo ao índice |
-| PUT | `/{id}/artigos/{idArtigo}` | Actualiza artigo |
-| DELETE | `/{id}/artigos/{idArtigo}` | Remove artigo |
+| PATCH | `/{id}/pages/{order}` | Ajusta uma página (ex.: alterna `type` entre `CAPA`/`CONTEUDO`) |
+| POST | `/{id}/articles` | Adiciona artigo ao índice |
+| PUT | `/{id}/articles/{articleId}` | Actualiza artigo |
+| DELETE | `/{id}/articles/{articleId}` | Remove artigo (soft delete) |
 | POST | `/{id}/tags` | Adiciona etiqueta |
-| DELETE | `/{id}/tags/{tag}` | Remove etiqueta |
+| DELETE | `/{id}/tags/{tag}` | Remove etiqueta (hard delete) |
 
 #### `POST /`
 ```json
-{ "idRevista": 1, "tema": "Dados que Contam Histórias", "lema": "...", "descricao": "...", "numero": 24, "preco": 290000, "dataLancamento": "2026-05-01", "eGratis": false }
+{
+  "magazineId": 1,
+  "theme": "Dados que Contam Histórias",
+  "tagline": "...",
+  "description": "...",
+  "number": 24,
+  "price": 290000,
+  "releaseDate": "2026-05-01",
+  "free": false
+}
 ```
-**Response (201):** edição criada, `estadoProcessamento` inexistente (flipbook ainda não enviado).
+**Response (201):** edição criada, com `processingState: null` (flipbook ainda não enviado).
+**Erros:** `400` (validação), `404` (revista não existe)
 
 #### `POST /{id}/flipbook`
-**Request:** `multipart` com campo `pdf`.
-**Response (202):** `{ "estadoProcessamento": "PROCESSANDO" }`
-**Erros:** `400`, `403`, `409` (já existe um flipbook em processamento para esta edição)
+**Request:** `multipart/form-data` com campo `pdf`.
+**Response (202):** `{ "processingState": "PROCESSANDO" }`
+**Erros:** `400` (ficheiro não é PDF), `403`, `409` (já existe um flipbook em processamento para esta edição)
 
-#### `PATCH /{id}/paginas/{ordem}`
-**Request:** `{ "tipo": "CAPA" }`
+#### `PATCH /{id}/pages/{order}`
+**Request:** `{ "type": "CAPA" }`
 **Response (200):** página actualizada.
+
+#### `POST /{id}/tags`
+**Request:** `{ "tag": "Inteligência Artificial" }`
+**Erros:** `409` (tag duplicada na mesma edição)
 
 ---
 
 ## Notas
 
 - Não existe endpoint que devolva o PDF original.
-- `estadoProcessamento` é herdado de `flipbook_edicao` — campo proposto, não confirmado (ver changelog).
+- `processingState` é herdado de `flipbook_edicao` — campo proposto, não confirmado (ver changelog).
 - Artigos e etiquetas não têm campo de autor — ponto em aberto.
+- Campos do frontend sem correspondência no MER (`status` published/draft, `language`, `priceNote`, `technicalDetails`, `technicalMd`, `relatedEditions`) **não existem na API** — o frontend ajusta-se (ver especificação final da API, secção "Frontend Adjustments").
