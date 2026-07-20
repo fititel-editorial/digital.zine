@@ -1,10 +1,12 @@
 package com.itel.fititel.api.exception;
 
+import com.itel.fititel.application.service.CustomUserDetailsService;
+import com.itel.fititel.application.service.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -14,15 +16,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Verifies that the GlobalExceptionHandler returns the standard ApiError body.
- * Security filters are disabled here to test the advice in isolation.
+ * Security filters are disabled to test the advice in isolation; the JWT
+ * filter's collaborators are mocked so the (auto-included) filter bean can be
+ * created without the JPA/user beans.
  */
-@WebMvcTest
-@Import(TestExceptionController.class)
+@WebMvcTest(controllers = TestExceptionController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class GlobalExceptionHandlerTest {
 
     @Autowired
     MockMvc mockMvc;
+
+    @MockitoBean
+    JwtService jwtService;
+
+    @MockitoBean
+    CustomUserDetailsService customUserDetailsService;
 
     @Test
     void invalidDtoReturns400WithStandardBody() throws Exception {
