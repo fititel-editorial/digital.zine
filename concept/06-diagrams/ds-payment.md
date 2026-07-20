@@ -12,7 +12,7 @@ sequenceDiagram
     participant GPO as GPO (EMIS)
 
     Leitor->>Frontend: Escolhe edição + Express
-    Frontend->>Backend: POST /pagamentos { idEdicao, metodoPagamento: MCX_EXPRESS, telemovel }
+    Frontend->>Backend: POST /payments { editionId, paymentMethod: MCX_EXPRESS, phoneNumber }
     Backend->>Backend: cria Pagamento, status=PROCESSANDO
     Backend->>GPO: iniciarPagamentoExpress()
     GPO-->>Leitor: pede confirmação no nº de telemóvel
@@ -23,7 +23,7 @@ sequenceDiagram
     GPO->>Backend: notificação assíncrona (referenciaExterna, estado)
     Backend->>Backend: status=PAGO, grava Log
 
-    Frontend->>Backend: GET /pagamentos/{id} (polling)
+    Frontend->>Backend: GET /payments/{id} (polling)
     Backend-->>Frontend: status=PAGO
     Frontend-->>Leitor: acede à edição completa
 ```
@@ -38,18 +38,18 @@ sequenceDiagram
     participant GPO as GPO (EMIS)
 
     Leitor->>Frontend: Escolhe edição + Referência
-    Frontend->>Backend: POST /pagamentos { idEdicao, metodoPagamento: REFERENCIA }
+    Frontend->>Backend: POST /payments { editionId, paymentMethod: REFERENCIA }
     Backend->>Backend: cria Pagamento, status=PROCESSANDO
     Backend->>GPO: gerarReferencia()
     GPO-->>Backend: Entidade / Referência / Valor
-    Backend-->>Frontend: { entidade, referencia, valor }
+    Backend-->>Frontend: { entity, reference, amount }
     Frontend-->>Leitor: mostra dados para pagamento
 
     Leitor->>GPO: paga no ATM ou homebanking (fora da aplicação)
     GPO->>Backend: notificação assíncrona (compensação, normalmente ao fim do dia)
     Backend->>Backend: status=PAGO, grava Log
 
-    Frontend->>Backend: GET /pagamentos/{id} (polling)
+    Frontend->>Backend: GET /payments/{id} (polling)
     Backend-->>Frontend: status=PAGO
     Frontend-->>Leitor: acede à edição completa
 ```
@@ -61,7 +61,7 @@ sequenceDiagram
     actor Dev as Admin/Dev
     participant Backend
 
-    Dev->>Backend: POST /dev/pagamentos/{id}/simular { resultado: "PAGO" }
+    Dev->>Backend: POST /dev/payments/{id}/simulate { result: "PAGO" }
     Backend->>Backend: SimuladoGatewayPagamentoService actualiza o Pagamento
     Backend->>Backend: status=PAGO, grava Log
     Note over Backend: Só existe em dev/local — nunca exposto em produção

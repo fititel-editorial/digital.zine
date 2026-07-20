@@ -27,7 +27,7 @@ Se és novo no projecto, começa pela [visão do produto](./01-product-vision.md
 
 ## Convenções que atravessam toda a documentação
 
-- **Idioma:** documentação (incluindo nomes de tabelas/colunas na base de dados) em português; código-fonte Java (classes, campos, variáveis, métodos) em inglês, mapeado para a base de dados via anotações JPA.
+- **Idioma:** a prosa da documentação é em português. O **MER** (entidades e atributos), o **código-fonte Java** e a **API** (recursos, endpoints, campos JSON) são em **inglês** — decisão da especificação final da API (v3.1). Os nomes físicos de tabelas/colunas na base de dados mantêm-se em português, mapeados via anotações JPA (`@Table`/`@Column`). Os **valores** de enums de domínio (`LEITOR`, `PAGO`, `CAPA`, `criou`, ...) mantêm-se em português, por serem dados e não identificadores.
 - **Auditoria e soft delete:** a maioria das tabelas tem `criado_em`, `atualizado_em` e `removido_em`. Um registo com `removido_em` preenchido é considerado eliminado e não aparece nas consultas normais (ver [auditoria](./03-data-model/softdelete-audit.md) para as excepções a este padrão).
 - **Autenticação:** JWT com `Bearer` token. Obtém-se via [`/auth/login`](./05-api/auth-endpoints.md) ou `/auth/register`.
 - **Roles:** Cada utilizador tem uma `role` — `LEITOR` ou `ADMIN`. Não há um terceiro role para "editor" — essa responsabilidade é modelada como associação (`editor_edicao`). A diferença de permissões está descrita na [segurança](./04-architecture/security.md).

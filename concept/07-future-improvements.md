@@ -6,7 +6,7 @@
 
 ## 1. Histórico de Leitura (RF8)
 
-Mantém-se adiado. Proposta: tabela `Leitura` (`id_utilizador`, `id_edicao`, `ultima_pagina`), par único, endpoint `GET /utilizadores/me/historico/{idEdicao}`.
+Mantém-se adiado. Proposta: tabela `Leitura` (`id_utilizador`, `id_edicao`, `ultima_pagina`), par único, endpoint `GET /users/me/history/{editionId}`.
 
 **Prioridade:** Média.
 
@@ -14,7 +14,7 @@ Mantém-se adiado. Proposta: tabela `Leitura` (`id_utilizador`, `id_edicao`, `ul
 
 ## 2. Estatísticas administrativas
 
-Não foi decidido na reunião se entra já no escopo. Endpoint `GET /admin/estatisticas` com métricas gerais (utilizadores, edições vendidas, receita, comentários).
+Não foi decidido na reunião se entra já no escopo. Endpoints `GET /admin/statistics` (métricas gerais: utilizadores, edições vendidas, receita, comentários) e `GET /admin/reports/revenue` (receita por edição e mensal — o painel do frontend já prevê estes dados, hoje em mock).
 
 **Prioridade:** A confirmar com a equipa.
 
@@ -30,9 +30,9 @@ O acesso à imagem de cada página é hoje verificado em cada pedido, mas a resp
 
 ## 4. Tabela de likes únicos por utilizador
 
-`FlipbookComentario.likes` é hoje um contador simples. Para impedir múltiplos likes do mesmo utilizador, é necessária uma tabela `flipbook_comentario_like` — não estava no MER da reunião, fica como proposta.
+`FlipbookComment.likes` é hoje um contador simples. Para impedir múltiplos likes do mesmo utilizador, é necessária uma tabela `flipbook_comentario_like` (entidade `CommentLike`). **Actualização v3.1:** entrou na especificação final da API (`POST/DELETE /pages/{pageId}/comments/{id}/like` com unicidade) — deixou de ser melhoria futura e passa a fazer parte do escopo, via migração `V2__comment_likes.sql`. Mantém-se aqui apenas como registo histórico.
 
-**Prioridade:** Média — antes de lançar publicamente, para evitar manipulação do contador.
+**Prioridade:** Incorporada no escopo da v3.1.
 
 ---
 

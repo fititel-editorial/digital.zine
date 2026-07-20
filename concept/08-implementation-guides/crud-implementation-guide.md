@@ -210,7 +210,7 @@ public class EditionServiceImpl implements EditionService {
 package com.itel.fititel.api.controller;
 
 @RestController
-@RequestMapping("/api/v1/edicoes")
+@RequestMapping("/api/v1/editions")
 @RequiredArgsConstructor
 public class EditionController {
 
