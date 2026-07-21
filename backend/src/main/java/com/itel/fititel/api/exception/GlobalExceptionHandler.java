@@ -2,6 +2,7 @@ package com.itel.fititel.api.exception;
 
 import com.itel.fititel.application.exception.BusinessRuleException;
 import com.itel.fititel.application.exception.ConflictException;
+import com.itel.fititel.application.exception.InvalidCredentialsException;
 import com.itel.fititel.application.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -41,6 +42,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiError> handleUnreadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, "Corpo do pedido inválido ou mal formado.", request);
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException ex, HttpServletRequest request) {
+        return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
