@@ -107,6 +107,8 @@
             <artifactId>mapstruct</artifactId>
             <version>1.6.3</version>
             <scope>provided</scope>
+        </dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security-test</artifactId>
 			<scope>test</scope>
