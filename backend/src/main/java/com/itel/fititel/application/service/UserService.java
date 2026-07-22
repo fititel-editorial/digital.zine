@@ -36,8 +36,6 @@ public class UserService {
         user.setDateOfBirth(updateRequest.dateOfBirth());
         user.setUpdatedAt(LocalDateTime.now());
 
-        System.out.println(updateRequest.firstName());
-
         User savedUser = userRepository.save(user);
         
         return UserMapper.toResponse(savedUser, List.of());
