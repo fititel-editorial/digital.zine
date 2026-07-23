@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.itel.fititel.application.service.MagazineService;
@@ -24,6 +25,7 @@ public class MagazineController {
         return magazineService.findAll();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/new")
     public ResponseEntity<?> create(@RequestBody CreateMagazineRequest magazine) {
         try{
@@ -44,6 +46,7 @@ public class MagazineController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody UpdateMagazineRequest magazine) {
         try{
@@ -55,6 +58,7 @@ public class MagazineController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> remove(@PathVariable Long id) {
         try{
