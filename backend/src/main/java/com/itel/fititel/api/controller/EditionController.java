@@ -93,5 +93,13 @@ public class EditionController {
         return ResponseEntity.status(HttpStatus.OK).body(editions);
         
     }
+
+    @GetMapping("/free")
+    public ResponseEntity<Page<EditionResponse>> getAllFreeEditions(@PageableDefault(size = 10) Pageable pageable){
+        Page<EditionResponse> editions = editionService.getAllFreeEditions(pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(editions);
+    }
+
+    
     
 }

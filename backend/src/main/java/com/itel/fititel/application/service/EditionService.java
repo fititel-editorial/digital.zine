@@ -19,6 +19,9 @@ import com.itel.fititel.domain.entity.ProcessingStateEnum;
 import com.itel.fititel.domain.repository.EditionRepository;
 import com.itel.fititel.domain.repository.MagazineRepository;
 
+import java.time.LocalDate;
+
+
 @Service
 public class EditionService {
 
@@ -28,8 +31,20 @@ public class EditionService {
     @Autowired
     private MagazineRepository magazineRepository;
 
+    private void checkFreeValidation(boolean isFree, Long price) {
+        if(isFree && price > 0) {
+            throw new IllegalArgumentException("Free editions cannot have a price");
+        }
+        if(!isFree && price == 0) {
+            throw new IllegalArgumentException("Non-free editions must have a price");
+        }
+    }
+
+
 
     public EditionResponse createEdition(CreateEditionRequest request) {
+        checkFreeValidation(request.free(), request.price());
+        
         Magazine magazine = magazineRepository.findByIdAndDeletedAtIsNull(request.magazineId())
             .orElseThrow(() -> new ResourceNotFoundException("Magazine", request.magazineId()));
         
@@ -57,13 +72,25 @@ public class EditionService {
         return editions.map(EditionMapper::toResponse);
     }
 
+    public Page<EditionResponse> getAllEditionsByReleaseDate(LocalDate releaseDate, @PageableDefault(size = 10) Pageable pageable){
+        Page<Edition> editions = editionRepository.findAllByReleaseDateAndDeletedAtIsNull(releaseDate, pageable);
+        return editions.map(EditionMapper::toResponse);
+    }
+    
+    public Page<EditionResponse> getAllFreeEditions(Pageable pageable){
+        Page<Edition> editions = editionRepository.findAllByDeletedAtIsNullAndFreeIsTrue(pageable);
+        return editions.map(EditionMapper::toResponse);
+    }
+
     public EditionResponse getEdition(Long editionId) {
         Edition edition = editionRepository.findByIdAndDeletedAtIsNull(editionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Edition", editionId));
         return EditionMapper.toResponse(edition);
     }
 
-    public EditionResponse updateEdition(Long editionId, UpdateEditionRequest request) {
+    public EditionResponse updateEdition(Long editionId, UpdateEditionRequest request) {        
+        checkFreeValidation(request.free(), request.price());
+        
         Edition edition = editionRepository.findByIdAndDeletedAtIsNull(editionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Edition", editionId));
         
