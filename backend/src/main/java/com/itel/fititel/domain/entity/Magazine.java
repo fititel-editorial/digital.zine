@@ -2,13 +2,23 @@ package com.itel.fititel.domain.entity;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
+/**
+ * Magazine (brand/title, e.g. "FITITEL"). Maps the {@code revista} table.
+ * Soft delete via {@code removido_em} ({@code deletedAt}).
+ */
 @Entity
 @Table(name = "revista")
 @Getter
@@ -16,34 +26,30 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Magazine {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "nome", nullable = false, length = 100)
-    private String title;
+    private String name;
 
-    @Column(name = "criado_em", nullable = false)
+    @Column(name = "criado_em", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "atualizado_em", nullable = true)
+    @Column(name = "atualizado_em")
     private LocalDateTime updatedAt;
 
-    @Column(name = "removido_em", nullable = true)
+    @Column(name = "removido_em")
     private LocalDateTime deletedAt;
 
     @PrePersist
-    public void prePersist() {
-        createdAt = LocalDateTime.now();
+    void onCreate() {
+        this.createdAt = LocalDateTime.now();
     }
 
     @PreUpdate
-    public void preUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreRemove
-    public void preRemove() {
-        deletedAt = LocalDateTime.now();
+    void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }

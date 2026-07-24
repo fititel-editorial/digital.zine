@@ -26,8 +26,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit tests for {@link MagazineService}.
- * Repository is mocked, so these run without a database or Spring context.
+ * Unit tests for {@link MagazineService}. Repository is mocked, so these run
+ * without a database or Spring context. Soft-delete filtering is done by the
+ * repository ({@code findAllByDeletedAtIsNull} / {@code findByIdAndDeletedAtIsNull}).
  */
 @ExtendWith(MockitoExtension.class)
 class MagazineServiceTest {
@@ -44,7 +45,7 @@ class MagazineServiceTest {
     void setUp() {
         magazine = new Magazine();
         magazine.setId(1L);
-        magazine.setTitle("Revista ITEL");
+        magazine.setName("Revista ITEL");
         magazine.setCreatedAt(LocalDateTime.now());
     }
 
@@ -58,100 +59,67 @@ class MagazineServiceTest {
         MagazineResponse response = magazineService.create(request);
 
         assertThat(response.id()).isEqualTo(1L);
-        assertThat(response.title()).isEqualTo("Revista ITEL");
+        assertThat(response.name()).isEqualTo("Revista ITEL");
 
         ArgumentCaptor<Magazine> captor = ArgumentCaptor.forClass(Magazine.class);
         verify(magazineRepository).save(captor.capture());
-        assertThat(captor.getValue().getTitle()).isEqualTo("Revista ITEL");
+        assertThat(captor.getValue().getName()).isEqualTo("Revista ITEL");
     }
 
     // ---------- findAll ----------
 
     @Test
-    void findAll_shouldExcludeSoftDeletedMagazines() {
-        Magazine deleted = new Magazine();
-        deleted.setId(2L);
-        deleted.setTitle("Revista Antiga");
-        deleted.setDeletedAt(LocalDateTime.now());
-
-        when(magazineRepository.findAll()).thenReturn(List.of(magazine, deleted));
+    void findAll_shouldReturnActiveMagazines() {
+        when(magazineRepository.findAllByDeletedAtIsNull()).thenReturn(List.of(magazine));
 
         List<MagazineResponse> result = magazineService.findAll();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).id()).isEqualTo(1L);
+        assertThat(result.get(0).name()).isEqualTo("Revista ITEL");
     }
 
     @Test
-    void findAll_shouldReturnEmptyList_whenNoMagazinesExist() {
-        when(magazineRepository.findAll()).thenReturn(List.of());
+    void findAll_shouldReturnEmptyList_whenNoneActive() {
+        when(magazineRepository.findAllByDeletedAtIsNull()).thenReturn(List.of());
 
-        List<MagazineResponse> result = magazineService.findAll();
-
-        assertThat(result).isEmpty();
+        assertThat(magazineService.findAll()).isEmpty();
     }
 
     // ---------- findById ----------
 
     @Test
-    void findById_shouldReturnResponse_whenMagazineExists() {
-        when(magazineRepository.findById(1L)).thenReturn(Optional.of(magazine));
+    void findById_shouldReturnResponse_whenActive() {
+        when(magazineRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(magazine));
 
-        MagazineResponse response = magazineService.findById(1L);
-
-        assertThat(response.id()).isEqualTo(1L);
-        assertThat(response.title()).isEqualTo("Revista ITEL");
+        assertThat(magazineService.findById(1L).name()).isEqualTo("Revista ITEL");
     }
 
     @Test
-    void findById_shouldThrow_whenMagazineDoesNotExist() {
-        when(magazineRepository.findById(99L)).thenReturn(Optional.empty());
+    void findById_shouldThrow_whenNotFoundOrSoftDeleted() {
+        when(magazineRepository.findByIdAndDeletedAtIsNull(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> magazineService.findById(99L))
-                .isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test
-    void findById_shouldThrow_whenMagazineIsSoftDeleted() {
-        magazine.setDeletedAt(LocalDateTime.now());
-        when(magazineRepository.findById(1L)).thenReturn(Optional.of(magazine));
-
-        assertThatThrownBy(() -> magazineService.findById(1L))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     // ---------- update ----------
 
     @Test
-    void update_shouldModifyAndReturnResponse_whenMagazineExists() {
-        UpdateMagazineRequest request = new UpdateMagazineRequest("Revista ITEL - Edição 2");
-        when(magazineRepository.findById(1L)).thenReturn(Optional.of(magazine));
+    void update_shouldModifyAndReturnResponse_whenActive() {
+        when(magazineRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(magazine));
         when(magazineRepository.save(any(Magazine.class))).thenReturn(magazine);
 
-        MagazineResponse response = magazineService.update(1L, request);
+        MagazineResponse response = magazineService.update(1L, new UpdateMagazineRequest("Revista ITEL - Edição 2"));
 
-        assertThat(response.title()).isEqualTo("Revista ITEL - Edição 2");
+        assertThat(response.name()).isEqualTo("Revista ITEL - Edição 2");
         verify(magazineRepository).save(magazine);
     }
 
     @Test
-    void update_shouldThrow_whenMagazineDoesNotExist() {
-        UpdateMagazineRequest request = new UpdateMagazineRequest("Novo Título");
-        when(magazineRepository.findById(99L)).thenReturn(Optional.empty());
+    void update_shouldThrow_whenNotFoundOrSoftDeleted() {
+        when(magazineRepository.findByIdAndDeletedAtIsNull(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> magazineService.update(99L, request))
-                .isInstanceOf(ResourceNotFoundException.class);
-
-        verify(magazineRepository, never()).save(any());
-    }
-
-    @Test
-    void update_shouldThrow_whenMagazineIsSoftDeleted() {
-        magazine.setDeletedAt(LocalDateTime.now());
-        UpdateMagazineRequest request = new UpdateMagazineRequest("Novo Título");
-        when(magazineRepository.findById(1L)).thenReturn(Optional.of(magazine));
-
-        assertThatThrownBy(() -> magazineService.update(1L, request))
+        assertThatThrownBy(() -> magazineService.update(99L, new UpdateMagazineRequest("Novo")))
                 .isInstanceOf(ResourceNotFoundException.class);
 
         verify(magazineRepository, never()).save(any());
@@ -160,8 +128,8 @@ class MagazineServiceTest {
     // ---------- remove ----------
 
     @Test
-    void remove_shouldSoftDelete_whenMagazineExists() {
-        when(magazineRepository.findById(1L)).thenReturn(Optional.of(magazine));
+    void remove_shouldSoftDelete_whenActive() {
+        when(magazineRepository.findByIdAndDeletedAtIsNull(1L)).thenReturn(Optional.of(magazine));
         when(magazineRepository.save(any(Magazine.class))).thenReturn(magazine);
 
         magazineService.remove(1L);
@@ -171,21 +139,10 @@ class MagazineServiceTest {
     }
 
     @Test
-    void remove_shouldThrow_whenMagazineDoesNotExist() {
-        when(magazineRepository.findById(99L)).thenReturn(Optional.empty());
+    void remove_shouldThrow_whenNotFoundOrSoftDeleted() {
+        when(magazineRepository.findByIdAndDeletedAtIsNull(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> magazineService.remove(99L))
-                .isInstanceOf(ResourceNotFoundException.class);
-
-        verify(magazineRepository, never()).save(any());
-    }
-
-    @Test
-    void remove_shouldThrow_whenMagazineAlreadyDeleted() {
-        magazine.setDeletedAt(LocalDateTime.now());
-        when(magazineRepository.findById(1L)).thenReturn(Optional.of(magazine));
-
-        assertThatThrownBy(() -> magazineService.remove(1L))
                 .isInstanceOf(ResourceNotFoundException.class);
 
         verify(magazineRepository, never()).save(any());
