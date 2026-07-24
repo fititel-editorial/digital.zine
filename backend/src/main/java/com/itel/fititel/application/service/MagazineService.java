@@ -10,6 +10,7 @@ import com.itel.fititel.api.dto.magazine.CreateMagazineRequest;
 import com.itel.fititel.api.dto.magazine.MagazineResponse;
 import com.itel.fititel.api.dto.magazine.UpdateMagazineRequest;
 import com.itel.fititel.api.mapper.MagazineMapper;
+import com.itel.fititel.application.exception.ResourceNotFoundException;
 import com.itel.fititel.domain.entity.Magazine;
 import com.itel.fititel.domain.repository.MagazineRepository;
 
@@ -34,21 +35,21 @@ public class MagazineService {
     }
 
     public void remove(Long id) {
-        Magazine magazine = magazineRepository.findById(id).orElseThrow(() -> new RuntimeException("Magazine not found"));
-        if(magazine.getDeletedAt() != null) throw new RuntimeException("Magazine not found");
+        Magazine magazine = magazineRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Magazine not found"));
+        if(magazine.getDeletedAt() != null) throw new ResourceNotFoundException("Magazine not found");
         magazine.setDeletedAt(LocalDateTime.now());
         magazineRepository.save(magazine);
     }
 
     public MagazineResponse findById(Long id) {
-        Magazine magazine = magazineRepository.findById(id).orElseThrow(() -> new RuntimeException("Magazine not found"));
-        if(magazine.getDeletedAt() != null) throw new RuntimeException("Magazine not found");
+        Magazine magazine = magazineRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Magazine not found"));
+        if(magazine.getDeletedAt() != null) throw new ResourceNotFoundException("Magazine not found");
         return MagazineMapper.toResponse(magazine);
     }
 
     public MagazineResponse update(Long id, UpdateMagazineRequest magazine) {
-        Magazine existingMagazine = magazineRepository.findById(id).orElseThrow(() -> new RuntimeException("Magazine not found"));
-        if(existingMagazine.getDeletedAt() != null) throw new RuntimeException("Magazine not found");
+        Magazine existingMagazine = magazineRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Magazine not found"));
+        if(existingMagazine.getDeletedAt() != null) throw new ResourceNotFoundException("Magazine not found");
         existingMagazine.setTitle(magazine.title());
         existingMagazine.setUpdatedAt(LocalDateTime.now());
         Magazine updatedMagazine = magazineRepository.save(existingMagazine);

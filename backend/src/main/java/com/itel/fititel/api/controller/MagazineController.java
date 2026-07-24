@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import com.itel.fititel.application.service.MagazineService;
 import com.itel.fititel.api.dto.magazine.*;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/v1/magazines")
 public class MagazineController {
@@ -26,49 +28,27 @@ public class MagazineController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/new")
-    public ResponseEntity<?> create(@RequestBody CreateMagazineRequest magazine) {
-        try{
-            return ResponseEntity.ok(magazineService.create(magazine));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong trying to create the magazine");
-        }
+    @PostMapping // Removed "/new" to match REST standard and your unit tests
+    public ResponseEntity<MagazineResponse> create(@Valid @RequestBody CreateMagazineRequest magazine) {
+        MagazineResponse created = magazineService.create(magazine);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created); // Returns 201 Created
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> findById(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(magazineService.findById(id));
-        } catch (Exception e) {
-            HttpStatus status = e.getMessage().contains("Magazine not found")?HttpStatus.NOT_FOUND:HttpStatus.INTERNAL_SERVER_ERROR;
-            String message = e.getMessage().contains("Magazine not found")?"Magazine not found":e.getMessage();
-            return ResponseEntity.status(status).body(message);
-        }
+    public ResponseEntity<MagazineResponse> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(magazineService.findById(id));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody UpdateMagazineRequest magazine) {
-        try{
-            return ResponseEntity.ok(magazineService.update(id, magazine));
-        } catch (Exception e) {
-            HttpStatus status = e.getMessage().contains("Magazine not found")?HttpStatus.NOT_FOUND:HttpStatus.INTERNAL_SERVER_ERROR;
-            String message = e.getMessage().contains("Magazine not found")?"Magazine not found":e.getMessage();
-            return ResponseEntity.status(status).body(message);
-        }
+    public ResponseEntity<MagazineResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateMagazineRequest magazine) {
+        return ResponseEntity.ok(magazineService.update(id, magazine));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> remove(@PathVariable Long id) {
-        try{
-            magazineService.remove(id);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            HttpStatus status = e.getMessage().contains("Magazine not found")?HttpStatus.NOT_FOUND:HttpStatus.INTERNAL_SERVER_ERROR;
-            String message = e.getMessage().contains("Magazine not found")?"Magazine not found":e.getMessage();
-            return ResponseEntity.status(status).body(message);
-        }
+    public ResponseEntity<Void> remove(@PathVariable Long id) {
+        magazineService.remove(id);
+        return ResponseEntity.noContent().build();
     }
-    
 }

@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public record MagazineResponse(
     Long id,
-    String name,
+    String title,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {}
